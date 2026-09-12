@@ -823,6 +823,15 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         val index = _items.indexOfFirst { it.id == item.id }
         if (index != -1) _items[index] = item.copy(takenHistory = newHistory)
         saveData()
+
+        // Re-arm the alarm so a dose logged early (or un-done) updates the
+        // schedule immediately, matching the notification's Take action.
+        if (index != -1) {
+            try {
+                NotificationReceiver.scheduleNotification(getApplication(), _items[index])
+            } catch (e: Exception) {
+            }
+        }
     }
 
     fun confirmIllness(item: MedData, date: LocalDate) {

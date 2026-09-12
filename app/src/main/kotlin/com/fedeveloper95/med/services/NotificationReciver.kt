@@ -96,7 +96,9 @@ class NotificationReceiver : BroadcastReceiver() {
             var date = LocalDate.now()
             val now = LocalTime.now()
 
-            if (isValidDate(item, date) && item.creationTime.isAfter(now)) {
+            if (isValidDate(item, date) && !item.takenHistory.containsKey(date) && item.creationTime.isAfter(now)) {
+                // Today's slot is still ahead and not taken yet -> alarm for today.
+                // (If it was already taken, e.g. early, fall through to the next day.)
                 return LocalDateTime.of(date, item.creationTime)
             }
 
@@ -149,7 +151,9 @@ class NotificationReceiver : BroadcastReceiver() {
                     items.filter {
                         it.type == ItemType.Medicine &&
                                 it.creationTime == triggerItem.creationTime &&
-                                isValidDate(it, LocalDate.now())
+                                isValidDate(it, LocalDate.now()) &&
+                                // Skip meds already logged today (e.g. taken early).
+                                !it.takenHistory.containsKey(LocalDate.now())
                     }
                 }
 
