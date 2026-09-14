@@ -30,6 +30,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Collections
+import kotlin.math.max
 
 sealed class EditItem {
     abstract val uniqueId: String
@@ -42,6 +43,13 @@ sealed class EditItem {
         override val uniqueId = "group_${divider.id}"
     }
 }
+
+/** Supply (inventory) settings for a medicine, as entered in the editor. */
+data class InventoryEntry(
+    val dosesLeft: Int,
+    val dosesPerRefill: Int,
+    val lowThreshold: Int
+)
 
 @Keep
 data class MedData(
@@ -61,7 +69,11 @@ data class MedData(
     val displayOrder: Int = 0,
     val intervalGap: Int? = null,
     val category: String? = null,
-    val notificationType: Int = 0
+    val notificationType: Int = 0,
+    val supplyDosesLeft: Int? = null,
+    val supplyDosesPerRefill: Int? = null,
+    val supplyLowThreshold: Int? = null,
+    val supplyAlertShown: Boolean = false
 ) : Serializable {
 
     fun toJson(): JSONObject {
@@ -92,6 +104,10 @@ data class MedData(
         json.put("intervalGap", intervalGap ?: JSONObject.NULL)
         json.put("category", category ?: JSONObject.NULL)
         json.put("notificationType", notificationType)
+        json.put("supplyDosesLeft", supplyDosesLeft ?: JSONObject.NULL)
+        json.put("supplyDosesPerRefill", supplyDosesPerRefill ?: JSONObject.NULL)
+        json.put("supplyLowThreshold", supplyLowThreshold ?: JSONObject.NULL)
+        json.put("supplyAlertShown", supplyAlertShown)
         return json
     }
 
@@ -131,7 +147,11 @@ data class MedData(
                 displayOrder = json.optInt("displayOrder", 0),
                 intervalGap = if (json.isNull("intervalGap")) null else json.getInt("intervalGap"),
                 category = if (json.isNull("category")) null else json.getString("category"),
-                notificationType = json.optInt("notificationType", 0)
+                notificationType = json.optInt("notificationType", 0),
+                supplyDosesLeft = if (json.isNull("supplyDosesLeft")) null else json.optInt("supplyDosesLeft"),
+                supplyDosesPerRefill = if (json.isNull("supplyDosesPerRefill")) null else json.optInt("supplyDosesPerRefill"),
+                supplyLowThreshold = if (json.isNull("supplyLowThreshold")) null else json.optInt("supplyLowThreshold"),
+                supplyAlertShown = json.optBoolean("supplyAlertShown", false)
             )
         }
     }
@@ -184,6 +204,8 @@ object DataRepository {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        // Every data mutation funnels through here — keep the supply widget current.
+        MedSupplyWidgetProvider.updateAll(context)
     }
 
     private fun migrateLegacyData(context: Context): List<MedData> {
@@ -252,7 +274,13 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
+        InventoryService.createNotificationChannel(application)
         loadData()
+        // A supply restored from a backup or rebooted below its threshold must
+        // alert without waiting for the next dose event.
+        if (InventoryService.evaluateAll(application, _items)) {
+            saveData()
+        }
         syncToWear()
 
         val filter = IntentFilter("com.fedeveloper95.med.RELOAD_DATA")
@@ -512,7 +540,8 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         notes: String? = null,
         category: String? = null,
         intervalGap: Int? = null,
-        notificationType: Int = 0
+        notificationType: Int = 0,
+        supply: InventoryEntry? = null
     ) {
         val groupId = System.currentTimeMillis()
         val baseDate = selectedDate
@@ -602,6 +631,7 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
             _items.add(newItem)
             if (type == ItemType.Medicine) {
                 NotificationReceiver.scheduleNotification(getApplication(), newItem)
+                applySupplySettings(newItem, supply)
             }
         }
         saveData()
@@ -618,7 +648,8 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         intervalGap: Int?,
         notificationType: Int = 0,
         rangeStart: Long? = -2L,
-        rangeEnd: Long? = -2L
+        rangeEnd: Long? = -2L,
+        supply: InventoryEntry? = null
     ) {
         val context = getApplication<Application>()
         val freqLabel = if (intervalGap == 14) context.getString(R.string.frequency_unit_biweek)
@@ -656,6 +687,9 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
                     if (rangeEnd != null && rangeEnd != -2L) LocalDate.ofEpochDay(rangeEnd / 86400000) else editStart
             }
 
+            // Entries being replaced get new IDs below — cancel alerts keyed to
+            // the old IDs so no orphaned low-supply notification survives.
+            relatedItems.forEach { InventoryService.cancelLowSupplyNotification(context, it) }
             _items.removeAll { it.id in relatedIds }
 
             val baseNewItem = originalItem.copy(
@@ -666,7 +700,11 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
                 notes = notes,
                 intervalGap = intervalGap,
                 notificationType = notificationType,
-                frequencyLabel = freqLabel
+                frequencyLabel = freqLabel,
+                supplyDosesLeft = supply?.dosesLeft,
+                supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { it > 0 },
+                supplyLowThreshold = supply?.lowThreshold,
+                supplyAlertShown = false
             )
 
             relatedItems.forEachIndexed { i, oldItem ->
@@ -717,6 +755,9 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
+        // Non-range edits also recreate entries with new IDs — cancel alerts
+        // keyed to the old IDs so no orphaned low-supply notification survives.
+        relatedItems.forEach { InventoryService.cancelLowSupplyNotification(context, it) }
         _items.removeAll { it.id in relatedIds }
 
         val newGroupId = System.currentTimeMillis()
@@ -733,7 +774,11 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
                 notes = notes,
                 intervalGap = intervalGap,
                 notificationType = notificationType,
-                frequencyLabel = freqLabel
+                frequencyLabel = freqLabel,
+                supplyDosesLeft = supply?.dosesLeft,
+                supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { it > 0 },
+                supplyLowThreshold = supply?.lowThreshold,
+                supplyAlertShown = false
             )
             _items.add(newItem)
             if (newItem.type == ItemType.Medicine) {
@@ -741,6 +786,14 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         saveData()
+        refreshLowSupplyAlerts()
+    }
+
+    /** Re-evaluates every item against its low-supply threshold and persists changes. */
+    private fun refreshLowSupplyAlerts() {
+        if (InventoryService.evaluateAll(getApplication(), _items)) {
+            saveData()
+        }
     }
 
     fun deleteItem(item: MedData, deleteDate: LocalDate) {
@@ -802,6 +855,59 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         saveData()
     }
 
+    /**
+     * Applies supply (inventory) settings from the editor to all entries of the
+     * item's group. `null` supply turns tracking off. Turning tracking on for a
+     * group that had none seeds every dose slot with the full amount; switching
+     * to per-refill mode scales an existing running count.
+     */
+    fun applySupplySettings(item: MedData, supply: InventoryEntry?) {
+        val targets = if (item.groupId != null) {
+            _items.filter { it.groupId == item.groupId }
+        } else {
+            listOf(item)
+        }
+
+        val refillsEnabled = supply != null && supply.dosesPerRefill > 0
+        val scale = if (refillsEnabled && item.supplyDosesPerRefill != null && item.supplyDosesPerRefill > 0) {
+            supply.dosesPerRefill.toFloat() / item.supplyDosesPerRefill
+        } else 1f
+
+        targets.forEach { target ->
+            val newLeft = when {
+                supply == null -> null
+                target.supplyDosesLeft == null -> supply.dosesLeft
+                refillsEnabled -> max(0, Math.round(target.supplyDosesLeft * scale))
+                else -> target.supplyDosesLeft
+            }
+            val index = _items.indexOfFirst { it.id == target.id }
+            if (index != -1) {
+                _items[index] = target.copy(
+                    supplyDosesLeft = newLeft,
+                    supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { refillsEnabled },
+                    supplyLowThreshold = supply?.lowThreshold,
+                    supplyAlertShown = false
+                )
+            }
+        }
+        saveData()
+    }
+
+    /**
+     * Applies supply settings to the group that was just created by [addItem].
+     * The new group carries the entered title on each of its entries.
+     */
+    fun setSupplyOnNewestGroup(title: String, supply: InventoryEntry?) {
+        if (supply == null) return
+        val newest = _items.lastOrNull { it.type == ItemType.Medicine && it.title == title } ?: return
+        if (supply == null) {
+            // Sanity fallback: created without tracking (should not happen when
+            // called from the medicine sheet, which omits the argument then).
+            return
+        }
+        applySupplySettings(newest, supply)
+    }
+
     fun restoreItem(item: MedData) {
         val index = _items.indexOfFirst { it.id == item.id }
         if (index != -1) {
@@ -816,21 +922,28 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         if (item.type != ItemType.Medicine) return
         if (date.isAfter(LocalDate.now())) return
 
-        val newHistory = HashMap(item.takenHistory)
+        val index = _items.indexOfFirst { it.id == item.id }
+        if (index == -1) return
+        // Work from the stored item, not the (possibly stale) UI copy: a dose
+        // logged from a notification or watch may have changed history or stock
+        // since this card was rendered.
+        val current = _items[index]
+        val newHistory = HashMap(current.takenHistory)
         if (newHistory.containsKey(date)) newHistory.remove(date) else newHistory[date] =
             LocalTime.now()
 
-        val index = _items.indexOfFirst { it.id == item.id }
-        if (index != -1) _items[index] = item.copy(takenHistory = newHistory)
+        _items[index] = applyInventoryChange(
+            getApplication(),
+            current.copy(takenHistory = newHistory),
+            isTaken = newHistory.containsKey(date)
+        )
         saveData()
 
         // Re-arm the alarm so a dose logged early (or un-done) updates the
         // schedule immediately, matching the notification's Take action.
-        if (index != -1) {
-            try {
-                NotificationReceiver.scheduleNotification(getApplication(), _items[index])
-            } catch (e: Exception) {
-            }
+        try {
+            NotificationReceiver.scheduleNotification(getApplication(), _items[index])
+        } catch (e: Exception) {
         }
     }
 

@@ -31,7 +31,8 @@ object CsvPortability {
         "id", "group_id", "type", "title", "icon_name", "color_code",
         "frequency_label", "creation_date", "creation_time",
         "taken_dates", "taken_times", "recurrence_days", "end_date",
-        "interval_days", "notes", "display_order", "category", "notification_type"
+        "interval_days", "notes", "display_order", "category", "notification_type",
+        "supply_doses_left", "supply_refill_size", "supply_low_threshold"
     )
 
     private const val LIST_SEPARATOR = "|"
@@ -61,7 +62,10 @@ object CsvPortability {
                 m.notes ?: "",
                 m.displayOrder.toString(),
                 m.category ?: "",
-                m.notificationType.toString()
+                m.notificationType.toString(),
+                m.supplyDosesLeft?.toString() ?: "",
+                m.supplyDosesPerRefill?.toString() ?: "",
+                m.supplyLowThreshold?.toString() ?: ""
             )
             sb.append(cells.joinToString(",") { encodeCell(it) }).append("\r\n")
         }
@@ -127,7 +131,10 @@ object CsvPortability {
                         displayOrder = cell("display_order").toIntOrNull() ?: 0,
                         intervalGap = cell("interval_days").toIntOrNull(),
                         category = cell("category").ifEmpty { null },
-                        notificationType = cell("notification_type").toIntOrNull() ?: 0
+                        notificationType = cell("notification_type").toIntOrNull() ?: 0,
+                        supplyDosesLeft = cell("supply_doses_left").toIntOrNull(),
+                        supplyDosesPerRefill = cell("supply_refill_size").toIntOrNull(),
+                        supplyLowThreshold = cell("supply_low_threshold").toIntOrNull()
                     )
                 )
             } catch (e: IllegalArgumentException) {

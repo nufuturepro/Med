@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Event
+import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MedicalServices
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Card
@@ -279,6 +280,34 @@ fun MedDataCard(
                             overflow = TextOverflow.Ellipsis,
                             softWrap = false
                         )
+                    }
+                    if (isMedicine && item.supplyDosesLeft != null) {
+                        val low = item.supplyLowThreshold != null &&
+                                item.supplyDosesLeft <= item.supplyLowThreshold
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Rounded.Inventory2,
+                                null,
+                                modifier = Modifier.size(12.dp),
+                                tint = if (low) MaterialTheme.colorScheme.error
+                                else cardContentColor.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(
+                                    R.string.supply_badge_format,
+                                    item.supplyDosesLeft
+                                ),
+                                fontFamily = GoogleSansFlex,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = if (low) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (low) MaterialTheme.colorScheme.error
+                                else cardContentColor.copy(alpha = 0.7f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
+                            )
+                        }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isMedicine) {

@@ -318,4 +318,18 @@
     <string name="image_set">Image set</string>
     <string name="tap_to_set">Tap to set</string>
 
+    <!-- Supply (inventory) tracking -->
+    <string name="inventory_channel_name">Supply alerts</string>
+    <string name="inventory_channel_desc">Alerts when a medication supply is running low</string>
+    <string name="supply_track_label">Track supply</string>
+    <string name="supply_doses_left">Doses left</string>
+    <string name="supply_refill_size">Refill size (doses per refill)</string>
+    <string name="supply_alert_when_below">Alert when supply is at or below</string>
+    <string name="supply_badge_format">%1$d left</string>
+    <string name="widget_description">Lowest-supply medication</string>
+    <string name="widget_no_tracking">No meds tracked for supply</string>
+    <string name="inventory_low_title">Low supply: %1$s</string>
+    <string name="inventory_low_desc">Only %1$d doses left — time to refill.</string>
+    <string name="inventory_low_desc_refill">Only %1$d doses left — time to refill (%2$d doses per refill).</string>
+
 </resources>

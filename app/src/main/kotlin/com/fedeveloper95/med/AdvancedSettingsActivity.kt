@@ -79,6 +79,7 @@ import com.fedeveloper95.med.elements.AdvancedSettingsActivity.RestorePopup
 import com.fedeveloper95.med.elements.MainActivity.CommunityBottomSheet
 import com.fedeveloper95.med.services.CsvPortability
 import com.fedeveloper95.med.services.DataRepository
+import com.fedeveloper95.med.services.InventoryService
 import com.fedeveloper95.med.services.MedifixImporter
 import com.fedeveloper95.med.services.NotificationReceiver
 import com.fedeveloper95.med.ItemType
@@ -829,6 +830,16 @@ private suspend fun importSettings(context: Context, uri: Uri): Boolean {
                     if (item.type == ItemType.Medicine) {
                         NotificationReceiver.scheduleNotification(context, item)
                     }
+                }
+            } catch (e: Exception) {
+            }
+
+            // An imported backup that is already below its low-supply threshold
+            // must alert immediately, not after the next dose event.
+            try {
+                InventoryService.createNotificationChannel(context)
+                if (InventoryService.evaluateAll(context, mergedItems)) {
+                    DataRepository.saveData(context, mergedItems)
                 }
             } catch (e: Exception) {
             }
