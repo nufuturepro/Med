@@ -1274,7 +1274,7 @@ fun MedApp(
                             colorCode,
                             listOf(itemToEdit.creationTime),
                             null,
-                            null,
+                            itemToEdit.notes,
                             null
                         )
                         viewModel.selectedDate = prevSelected

@@ -283,6 +283,16 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         }
         syncToWear()
 
+        // Re-arm dose alarms for every medicine on startup. Alarms die on
+        // force-stop or a crashed process, and until now they only came back
+        // when the user happened to edit or take a dose.
+        _items.filter { it.type == ItemType.Medicine }.forEach { item ->
+            try {
+                NotificationReceiver.scheduleNotification(getApplication(), item)
+            } catch (e: Exception) {
+            }
+        }
+
         val filter = IntentFilter("com.fedeveloper95.med.RELOAD_DATA")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             application.registerReceiver(updateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
@@ -660,129 +670,57 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         )
         else context.getString(R.string.frequency_daily)
 
-        val isMedicine = originalItem.type == ItemType.Medicine
-        val isRangeUpdate = rangeStart != -2L
-
-        val relatedItems = if (originalItem.groupId != null) {
-            _items.filter { it.groupId == originalItem.groupId }
-        } else {
-            listOf(originalItem)
-        }
-
-        val relatedIds = relatedItems.map { it.id }.toSet()
-
-        if (isMedicine && isRangeUpdate) {
-            var editStart = selectedDate
-            var editEnd: LocalDate? = null
-
-            if (rangeStart == null && rangeEnd == null) {
-                editStart = selectedDate
-                editEnd = selectedDate
-            } else if (rangeStart == -1L) {
-                editStart = selectedDate
-                editEnd = originalItem.endDate
-            } else if (rangeStart != null) {
-                editStart = LocalDate.ofEpochDay(rangeStart / 86400000)
-                editEnd =
-                    if (rangeEnd != null && rangeEnd != -2L) LocalDate.ofEpochDay(rangeEnd / 86400000) else editStart
-            }
-
-            // Entries being replaced get new IDs below — cancel alerts keyed to
-            // the old IDs so no orphaned low-supply notification survives.
-            relatedItems.forEach { InventoryService.cancelLowSupplyNotification(context, it) }
-            _items.removeAll { it.id in relatedIds }
-
-            val baseNewItem = originalItem.copy(
+        // All edit rules (no-op guard, slot preservation, history inheritance,
+        // phantom-fragment dropping) live in the pure, unit-tested planner.
+        val plan = MedUpdatePlanner.plan(
+            MedUpdatePlanner.Request(
+                originalItem = originalItem,
                 title = title,
                 iconName = iconName,
                 colorCode = colorCode,
-                recurrenceDays = days,
+                times = times,
+                days = days,
                 notes = notes,
                 intervalGap = intervalGap,
                 notificationType = notificationType,
-                frequencyLabel = freqLabel,
-                supplyDosesLeft = supply?.dosesLeft,
-                supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { it > 0 },
-                supplyLowThreshold = supply?.lowThreshold,
-                supplyAlertShown = false
-            )
+                freqLabel = freqLabel,
+                rangeStart = rangeStart,
+                rangeEnd = rangeEnd,
+                selectedDate = selectedDate
+            ),
+            supply,
+            _items.filter { it.type == originalItem.type }
+        )
 
-            relatedItems.forEachIndexed { i, oldItem ->
-                if (editStart.isAfter(oldItem.creationDate)) {
-                    val newEndDate = editStart.minusDays(1)
-                    val finalEndDate =
-                        if (oldItem.endDate != null && oldItem.endDate.isBefore(newEndDate)) oldItem.endDate else newEndDate
-                    _items.add(
-                        oldItem.copy(
-                            id = System.nanoTime() + i,
-                            endDate = finalEndDate
-                        )
-                    )
-                }
+        when (plan) {
+            is MedUpdatePlanner.Plan.None -> return
+
+            is MedUpdatePlanner.Plan.SupplyOnly -> {
+                applySupplySettings(originalItem, supply)
+                return
             }
 
-            val editedGroupId = System.currentTimeMillis()
-            times.forEachIndexed { i, time ->
-                val editedPart = baseNewItem.copy(
-                    id = System.nanoTime() + 100 + i,
-                    groupId = editedGroupId,
-                    creationTime = time,
-                    creationDate = editStart,
-                    endDate = editEnd,
-                    takenHistory = HashMap()
-                )
-                _items.add(editedPart)
-                NotificationReceiver.scheduleNotification(getApplication(), editedPart)
-            }
-
-            if (editEnd != null) {
-                val newCreationDate = editEnd.plusDays(1)
-                relatedItems.forEachIndexed { i, oldItem ->
-                    if (oldItem.endDate == null || oldItem.endDate.isAfter(editEnd)) {
-                        val finalCreationDate =
-                            if (oldItem.creationDate.isAfter(newCreationDate)) oldItem.creationDate else newCreationDate
-                        _items.add(
-                            oldItem.copy(
-                                id = System.nanoTime() + 200 + i,
-                                creationDate = finalCreationDate
-                            )
-                        )
+            is MedUpdatePlanner.Plan.Rebuild -> {
+                // Entries being replaced get new IDs — cancel alerts keyed to
+                // the old IDs so no orphaned low-supply notification survives.
+                plan.removeIds.forEach { id ->
+                    _items.firstOrNull { it.id == id }?.let {
+                        InventoryService.cancelLowSupplyNotification(context, it)
                     }
                 }
-            }
+                _items.removeAll { it.id in plan.removeIds }
 
-            saveData()
-            return
-        }
-
-        // Non-range edits also recreate entries with new IDs — cancel alerts
-        // keyed to the old IDs so no orphaned low-supply notification survives.
-        relatedItems.forEach { InventoryService.cancelLowSupplyNotification(context, it) }
-        _items.removeAll { it.id in relatedIds }
-
-        val newGroupId = System.currentTimeMillis()
-        times.forEachIndexed { i, time ->
-            val newItem = originalItem.copy(
-                id = System.nanoTime() + i,
-                groupId = newGroupId,
-                title = title,
-                iconName = iconName,
-                colorCode = colorCode,
-                creationTime = time,
-                creationDate = originalItem.creationDate,
-                recurrenceDays = days,
-                notes = notes,
-                intervalGap = intervalGap,
-                notificationType = notificationType,
-                frequencyLabel = freqLabel,
-                supplyDosesLeft = supply?.dosesLeft,
-                supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { it > 0 },
-                supplyLowThreshold = supply?.lowThreshold,
-                supplyAlertShown = false
-            )
-            _items.add(newItem)
-            if (newItem.type == ItemType.Medicine) {
-                NotificationReceiver.scheduleNotification(getApplication(), newItem)
+                val newGroupId = System.currentTimeMillis()
+                plan.entries.forEachIndexed { i, entry ->
+                    val withIds = entry.copy(
+                        id = System.nanoTime() + i,
+                        groupId = if (entry.groupId == MedUpdatePlanner.NEW_GROUP) newGroupId else entry.groupId
+                    )
+                    _items.add(withIds)
+                    if (withIds.type == ItemType.Medicine) {
+                        NotificationReceiver.scheduleNotification(getApplication(), withIds)
+                    }
+                }
             }
         }
         saveData()

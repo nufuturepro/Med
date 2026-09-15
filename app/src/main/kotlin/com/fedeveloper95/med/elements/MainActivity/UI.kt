@@ -3,6 +3,7 @@
 package com.fedeveloper95.med.elements.MainActivity
 
 import android.graphics.Color.parseColor
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -68,6 +69,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -90,10 +92,12 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
-import java.util.Locale
+import java.util.Locale/** Window in which a second tap on a taken dose confirms the un-take. */
+private const val UNTAKE_CONFIRM_WINDOW_MS = 3000L
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+
 fun MedDataCard(
     item: MedData,
     currentViewDate: LocalDate,
@@ -153,6 +157,14 @@ fun MedDataCard(
     val isToday = LocalDate.now() == currentViewDate
 
     val toggleEnabled = isMedicine && !currentViewDate.isAfter(LocalDate.now())
+
+    // Accidental un-take protection: the first tap on a taken dose only "locks
+    // in" a pending-undo state (harmless, nothing is written); a second tap
+    // within the window actually un-logs the dose. Tapping again while pending
+    // re-confirms the dose instead of toggling history.
+    var pendingUntakeUntil by remember(item.id) { mutableStateOf(0L) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val icSick = ImageVector.vectorResource(R.drawable.ic_sick)
     val icMind = ImageVector.vectorResource(R.drawable.ic_mind)
@@ -414,7 +426,36 @@ fun MedDataCard(
                             selected = isTakenToday,
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onToggle()
+                                if (isTakenToday) {
+                                    val now = System.currentTimeMillis()
+                                    if (now < pendingUntakeUntil) {
+                                        // Second tap inside the window: confirm undo.
+                                        pendingUntakeUntil = 0L
+                                        onToggle()
+                                    } else {
+                                        // First tap: arm the two-tap confirmation.
+                                        pendingUntakeUntil = now + UNTAKE_CONFIRM_WINDOW_MS
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.tap_again_to_untake),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        scope.launch {
+                                            delay(UNTAKE_CONFIRM_WINDOW_MS + 50L)
+                                            if (System.currentTimeMillis() >= pendingUntakeUntil &&
+                                                pendingUntakeUntil != 0L
+                                            ) {
+                                                pendingUntakeUntil = 0L
+                                            }
+                                            // No-op by design: just clears the
+                                            // pending flag; if the user confirmed,
+                                            // the flag was already reset to 0.
+                                        }
+                                        // Keep the dose logged: do not call onToggle.
+                                    }
+                                } else {
+                                    onToggle()
+                                }
                             },
                             enabled = toggleEnabled
                         )

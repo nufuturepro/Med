@@ -331,5 +331,6 @@
     <string name="inventory_low_title">Low supply: %1$s</string>
     <string name="inventory_low_desc">Only %1$d doses left — time to refill.</string>
     <string name="inventory_low_desc_refill">Only %1$d doses left — time to refill (%2$d doses per refill).</string>
+    <string name="tap_again_to_untake">Tap again to un-log this dose</string>
 
 </resources>
