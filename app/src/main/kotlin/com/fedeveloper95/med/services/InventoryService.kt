@@ -8,6 +8,8 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.fedeveloper95.med.MainActivity
 import com.fedeveloper95.med.R
+import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Per-medication supply (inventory) tracking.
@@ -32,32 +34,104 @@ object InventoryService {
     /** Base for per-item alert IDs; dose alarms use `item.id.toInt()` directly. */
     private const val ALERT_ID_BASE = 900000000
 
+    /** How many ledger entries to keep per medicine (newest wins). */
+    private const val LEDGER_LIMIT = 60
+
+    /**
+     * Appends a stock change to the item's supply ledger (bounded) so future
+     * discrepancies can be traced. Pure: returns the updated item.
+     */
+    fun logSupplyChange(
+        item: MedData,
+        kind: SupplyChangeKind,
+        delta: Int,
+        balanceAfter: Int,
+        date: LocalDate = LocalDate.now(),
+        time: LocalTime = LocalTime.now()
+    ): MedData = item.copy(
+        supplyLedger = (
+                item.supplyLedger + SupplyChange(kind, date, time, delta, balanceAfter)
+                ).takeLast(LEDGER_LIMIT)
+    )
+
     private fun alertId(item: MedData): Int = ALERT_ID_BASE + (item.id % 100000).toInt()
 
     /**
      * Applies the stock change for a dose being logged or un-logged.
      * Returns the updated item; the caller is responsible for persisting it.
      */
-    fun applyInventoryChange(context: Context, item: MedData, isTaken: Boolean): MedData {
+    fun applyInventoryChange(context: Context?, item: MedData, isTaken: Boolean): MedData {
         val left = item.supplyDosesLeft ?: return item
         val updated = item.copy(supplyDosesLeft = (left + if (isTaken) -1 else 1).coerceAtLeast(0))
         return evaluateItem(context, updated)
     }
 
     /**
+     * Idempotent take/un-take for one dose on [date], shared by every entry
+     * point (card toggle, notification action, fullscreen alarm, Wear). A take
+     * only logs and decrements stock when the dose isn't already logged; an
+     * un-take only refunds when it was. This is what keeps a dose tapped on
+     * the card AND confirmed via notification/alarm from counting twice.
+     */
+    fun applyTakeIfNew(
+        context: Context?,
+        item: MedData,
+        date: LocalDate,
+        isTaken: Boolean,
+        takenAt: LocalTime = LocalTime.now()
+    ): MedData {
+        val alreadyLogged = item.takenHistory.containsKey(date)
+        return when {
+            isTaken && alreadyLogged -> item
+            isTaken -> {
+                val updated = applyInventoryChange(
+                    context,
+                    item.copy(takenHistory = HashMap(item.takenHistory).apply { put(date, takenAt) }),
+                    isTaken = true
+                )
+                logSupplyChange(
+                    updated,
+                    SupplyChangeKind.TAKEN,
+                    delta = -1,
+                    balanceAfter = updated.supplyDosesLeft ?: 0,
+                    date = date,
+                    time = takenAt
+                )
+            }
+            !alreadyLogged -> item
+            else -> {
+                val updated = applyInventoryChange(
+                    context,
+                    item.copy(takenHistory = HashMap(item.takenHistory).apply { remove(date) }),
+                    isTaken = false
+                )
+                logSupplyChange(
+                    updated,
+                    SupplyChangeKind.REFUND,
+                    delta = +1,
+                    balanceAfter = updated.supplyDosesLeft ?: 0,
+                    date = date
+                )
+            }
+        }
+    }
+
+    /**
      * Evaluates one item against its threshold: posts the low-supply alert when the
      * stock is newly at/below it, and cancels a stale alert once stock is refilled.
      * Returns the item with [MedData.supplyAlertShown] updated accordingly.
+     * A null [context] (plain-JVM tests) skips notification posting/cancelling
+     * but still records the alert state.
      */
-    fun evaluateItem(context: Context, item: MedData): MedData {
+    fun evaluateItem(context: Context?, item: MedData): MedData {
         val left = item.supplyDosesLeft ?: return item
         val threshold = item.supplyLowThreshold ?: return item
         if (left > threshold) {
-            cancelLowSupplyNotification(context, item)
+            context?.let { cancelLowSupplyNotification(it, item) }
             return item
         }
         if (item.supplyAlertShown) return item
-        postLowSupplyNotification(context, item)
+        if (context != null) postLowSupplyNotification(context, item)
         return item.copy(supplyAlertShown = true)
     }
 
@@ -68,20 +142,22 @@ object InventoryService {
      * medication share a title). Returns true when any item changed and the list
      * should be persisted.
      */
-    fun evaluateAll(context: Context, items: MutableList<MedData>): Boolean {
+    fun evaluateAll(context: Context?, items: MutableList<MedData>): Boolean {
         var changed = false
         val alertedTitles = mutableSetOf<String>()
         for (i in items.indices) {
             val item = items[i]
             val left = item.supplyDosesLeft ?: continue
             val threshold = item.supplyLowThreshold
-            if (threshold != null && left <= threshold && !item.supplyAlertShown &&
+            // Archived meds (schedule already ended) never raise new alerts.
+            val today = java.time.LocalDate.now()
+            val ended = item.endDate != null && today.isAfter(item.endDate)
+            if (!ended && threshold != null && left <= threshold && !item.supplyAlertShown &&
                 alertedTitles.add(item.title)
             ) {
                 items[i] = evaluateItem(context, item)
                 changed = true
-            }
-        }
+            }        }
         return changed
     }
 

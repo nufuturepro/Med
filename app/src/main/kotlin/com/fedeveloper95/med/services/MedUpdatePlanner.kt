@@ -104,9 +104,12 @@ object MedUpdatePlanner {
         }
 
         // Rule 3: history follows its time slot; a brand-new time inherits the
-        // history of the entry that was being edited.
+        // history of the entry that was being edited. Skip records (reason +
+        // note) are treated exactly like taken history so they survive edits.
         val historyByTime = relatedItems.associate { it.creationTime to it.takenHistory }
         val editedHistory = relatedItems.firstOrNull { it.id == original.id }?.takenHistory
+        val skipByTime = relatedItems.associate { it.creationTime to it.skipHistory }
+        val editedSkips = relatedItems.firstOrNull { it.id == original.id }?.skipHistory
 
         // Rule 2: the sheet edits one entry (times holds exactly that one time);
         // the rebuild covers every slot — the opened slot follows the sheet's
@@ -122,6 +125,7 @@ object MedUpdatePlanner {
             creationDate: LocalDate,
             endDate: LocalDate?,
             history: Map<LocalDate, LocalTime>,
+            skips: Map<LocalDate, SkipRecord>,
             reuseOldGroup: Boolean
         ): MedData = base.copy(
             id = 0,
@@ -141,7 +145,8 @@ object MedUpdatePlanner {
             supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { it > 0 },
             supplyLowThreshold = supply?.lowThreshold,
             supplyAlertShown = false,
-            takenHistory = HashMap(history)
+            takenHistory = HashMap(history),
+            skipHistory = HashMap(skips)
         )
 
         if (isMedicine && isRangeUpdate) {
@@ -168,14 +173,15 @@ object MedUpdatePlanner {
             relatedItems.forEach { oldItem ->
                 if (editStart.isAfter(oldItem.creationDate)) {
                     val earlier = oldItem.takenHistory.filterKeys { it.isBefore(editStart) }
+                    val earlierSkips = oldItem.skipHistory.filterKeys { it.isBefore(editStart) }
                     // Rule 4: no phantom schedule fragments without history.
-                    if (earlier.isNotEmpty()) {
+                    if (earlier.isNotEmpty() || earlierSkips.isNotEmpty()) {
                         val newEndDate = editStart.minusDays(1)
                         val finalEndDate =
                             if (oldItem.endDate != null && oldItem.endDate.isBefore(newEndDate))
                                 oldItem.endDate
                             else newEndDate
-                        entries += buildEntry(oldItem, oldItem.creationTime, oldItem.creationDate, finalEndDate, earlier, reuseOldGroup = true)
+                        entries += buildEntry(oldItem, oldItem.creationTime, oldItem.creationDate, finalEndDate, earlier, earlierSkips, reuseOldGroup = true)
                     }
                 }
             }
@@ -184,7 +190,9 @@ object MedUpdatePlanner {
             rebuildTimes.forEach { time ->
                 val window = (historyByTime[time] ?: editedHistory ?: emptyMap<LocalDate, LocalTime>())
                     .filterKeys { !it.isBefore(editStart) && (editEnd == null || !it.isAfter(editEnd)) }
-                entries += buildEntry(original, time, editStart, editEnd, window, reuseOldGroup = false)
+                val skipWindow = (skipByTime[time] ?: editedSkips ?: emptyMap<LocalDate, SkipRecord>())
+                    .filterKeys { !it.isBefore(editStart) && (editEnd == null || !it.isAfter(editEnd)) }
+                entries += buildEntry(original, time, editStart, editEnd, window, skipWindow, reuseOldGroup = false)
             }
 
             // History-bearing fragment after the edited window.
@@ -193,11 +201,12 @@ object MedUpdatePlanner {
                 relatedItems.forEach { oldItem ->
                     if (oldItem.endDate == null || oldItem.endDate.isAfter(editEnd)) {
                         val later = oldItem.takenHistory.filterKeys { it.isAfter(editEnd) }
-                        if (later.isNotEmpty()) {
+                        val laterSkips = oldItem.skipHistory.filterKeys { it.isAfter(editEnd) }
+                        if (later.isNotEmpty() || laterSkips.isNotEmpty()) {
                             val finalCreationDate =
                                 if (oldItem.creationDate.isAfter(newCreationDate)) oldItem.creationDate
                                 else newCreationDate
-                            entries += buildEntry(oldItem, oldItem.creationTime, finalCreationDate, oldItem.endDate, later, reuseOldGroup = true)
+                            entries += buildEntry(oldItem, oldItem.creationTime, finalCreationDate, oldItem.endDate, later, laterSkips, reuseOldGroup = true)
                         }
                     }
                 }
@@ -214,6 +223,7 @@ object MedUpdatePlanner {
                 original.creationDate,
                 original.endDate,
                 historyByTime[time] ?: editedHistory ?: emptyMap(),
+                skipByTime[time] ?: editedSkips ?: emptyMap(),
                 reuseOldGroup = false
             )
         }

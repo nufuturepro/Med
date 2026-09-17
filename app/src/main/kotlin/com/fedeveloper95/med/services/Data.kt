@@ -51,6 +51,57 @@ data class InventoryEntry(
     val lowThreshold: Int
 )
 
+/** Why a scheduled dose was deliberately skipped. */
+enum class SkipReason {
+    ADVERSE_REACTION,       // Allergic / adverse reaction (rash, swelling, side effects)
+    DOCTOR_DIRECTED,        // Doctor / clinic directed hold
+    PROCEDURE_FASTING,      // Upcoming procedure / fasting
+    VITALS_OUT_OF_RANGE,    // BP, heart rate or blood sugar threshold met
+    DOUBLE_DOSE_PROTECTION, // Already taken or taken too recently
+    ACUTE_ILLNESS,          // Acute illness / vomiting; cannot keep meds down
+    SUPPLY_MISSING,         // Dose unavailable or compromised
+    OTHER                   // Patient discretion
+}
+
+/** A dose skipped on a given date: reason plus an optional note. */
+data class SkipRecord(
+    val reason: SkipReason,
+    val time: LocalTime = LocalTime.now(),
+    val note: String? = null
+) : Serializable
+
+/** What kind of stock change produced a [SupplyChange] entry. */
+enum class SupplyChangeKind {
+    /** One dose logged as taken (stock -1). */
+    TAKEN,
+
+    /** A logged dose was un-taken (stock +1). */
+    REFUND,
+
+    /** Stock typed/stepped to a new value in the editor (no dose event). */
+    CORRECTION,
+
+    /** A correction that matches whole refills — most likely a restock. */
+    REFILL,
+
+    /** First supply value recorded for the entry. */
+    INITIAL
+}
+
+/**
+ * One entry in a medicine's supply ledger: what changed, when, by how much,
+ * and the resulting balance. Kept (bounded) so discrepancies like a dose
+ * counted twice can be traced after the fact.
+ */
+@Keep
+data class SupplyChange(
+    val kind: SupplyChangeKind,
+    val date: LocalDate,
+    val time: LocalTime,
+    val delta: Int,
+    val balanceAfter: Int
+) : Serializable
+
 @Keep
 data class MedData(
     val id: Long = System.currentTimeMillis(),
@@ -63,6 +114,7 @@ data class MedData(
     val creationDate: LocalDate,
     val creationTime: LocalTime = LocalTime.now(),
     val takenHistory: HashMap<LocalDate, LocalTime> = HashMap(),
+    val skipHistory: HashMap<LocalDate, SkipRecord> = HashMap(),
     val recurrenceDays: List<DayOfWeek>? = null,
     val endDate: LocalDate? = null,
     val notes: String? = null,
@@ -73,7 +125,8 @@ data class MedData(
     val supplyDosesLeft: Int? = null,
     val supplyDosesPerRefill: Int? = null,
     val supplyLowThreshold: Int? = null,
-    val supplyAlertShown: Boolean = false
+    val supplyAlertShown: Boolean = false,
+    val supplyLedger: List<SupplyChange> = emptyList()
 ) : Serializable {
 
     fun toJson(): JSONObject {
@@ -94,6 +147,16 @@ data class MedData(
         }
         json.put("takenHistory", historyObj)
 
+        val skipsObj = JSONObject()
+        skipHistory.forEach { (k, v) ->
+            val rec = JSONObject()
+            rec.put("reason", v.reason.name)
+            rec.put("time", v.time.toString())
+            if (v.note != null) rec.put("note", v.note)
+            skipsObj.put(k.toString(), rec)
+        }
+        json.put("skipHistory", skipsObj)
+
         val recArray = JSONArray()
         recurrenceDays?.forEach { recArray.put(it.name) }
         json.put("recurrenceDays", if (recurrenceDays == null) JSONObject.NULL else recArray)
@@ -108,6 +171,18 @@ data class MedData(
         json.put("supplyDosesPerRefill", supplyDosesPerRefill ?: JSONObject.NULL)
         json.put("supplyLowThreshold", supplyLowThreshold ?: JSONObject.NULL)
         json.put("supplyAlertShown", supplyAlertShown)
+
+        val ledgerArray = JSONArray()
+        supplyLedger.forEach { change ->
+            val obj = JSONObject()
+            obj.put("kind", change.kind.name)
+            obj.put("date", change.date.toString())
+            obj.put("time", change.time.toString())
+            obj.put("delta", change.delta)
+            obj.put("balanceAfter", change.balanceAfter)
+            ledgerArray.put(obj)
+        }
+        json.put("supplyLedger", ledgerArray)
         return json
     }
 
@@ -118,6 +193,24 @@ data class MedData(
             if (historyObj != null) {
                 historyObj.keys().forEach { key ->
                     history[LocalDate.parse(key)] = LocalTime.parse(historyObj.getString(key))
+                }
+            }
+
+            val skips = HashMap<LocalDate, SkipRecord>()
+            val skipsObj = json.optJSONObject("skipHistory")
+            if (skipsObj != null) {
+                skipsObj.keys().forEach { key ->
+                    val rec = skipsObj.getJSONObject(key)
+                    val reason = try {
+                        SkipReason.valueOf(rec.getString("reason"))
+                    } catch (e: Exception) {
+                        SkipReason.OTHER
+                    }
+                    skips[LocalDate.parse(key)] = SkipRecord(
+                        reason = reason,
+                        time = LocalTime.parse(rec.getString("time")),
+                        note = if (rec.isNull("note")) null else rec.optString("note")
+                    )
                 }
             }
 
@@ -141,6 +234,7 @@ data class MedData(
                 creationDate = LocalDate.parse(json.getString("creationDate")),
                 creationTime = LocalTime.parse(json.getString("creationTime")),
                 takenHistory = history,
+                skipHistory = skips,
                 recurrenceDays = recDays,
                 endDate = if (json.isNull("endDate")) null else LocalDate.parse(json.getString("endDate")),
                 notes = if (json.isNull("notes")) null else json.getString("notes"),
@@ -151,7 +245,28 @@ data class MedData(
                 supplyDosesLeft = if (json.isNull("supplyDosesLeft")) null else json.optInt("supplyDosesLeft"),
                 supplyDosesPerRefill = if (json.isNull("supplyDosesPerRefill")) null else json.optInt("supplyDosesPerRefill"),
                 supplyLowThreshold = if (json.isNull("supplyLowThreshold")) null else json.optInt("supplyLowThreshold"),
-                supplyAlertShown = json.optBoolean("supplyAlertShown", false)
+                supplyAlertShown = json.optBoolean("supplyAlertShown", false),
+                supplyLedger = buildList {
+                    json.optJSONArray("supplyLedger")?.let { arr ->
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.getJSONObject(i)
+                            val kind = try {
+                                SupplyChangeKind.valueOf(obj.getString("kind"))
+                            } catch (e: Exception) {
+                                SupplyChangeKind.CORRECTION
+                            }
+                            add(
+                                SupplyChange(
+                                    kind = kind,
+                                    date = LocalDate.parse(obj.getString("date")),
+                                    time = LocalTime.parse(obj.getString("time")),
+                                    delta = obj.optInt("delta", 0),
+                                    balanceAfter = obj.optInt("balanceAfter", 0)
+                                )
+                            )
+                        }
+                    }
+                }
             )
         }
     }
@@ -708,14 +823,32 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
                         InventoryService.cancelLowSupplyNotification(context, it)
                     }
                 }
+                val removedById = _items.filter { it.id in plan.removeIds }.associateBy { it.id }
                 _items.removeAll { it.id in plan.removeIds }
 
                 val newGroupId = System.currentTimeMillis()
                 plan.entries.forEachIndexed { i, entry ->
-                    val withIds = entry.copy(
+                    var withIds = entry.copy(
                         id = System.nanoTime() + i,
                         groupId = if (entry.groupId == MedUpdatePlanner.NEW_GROUP) newGroupId else entry.groupId
                     )
+                    // Ledger: a rebuild that changes the tracked count is a
+                    // correction too — log it against the slot it replaces.
+                    val oldSlot = removedById.values.firstOrNull { it.creationTime == entry.creationTime }
+                    if (oldSlot != null && withIds.supplyDosesLeft != null &&
+                        withIds.supplyDosesLeft != oldSlot.supplyDosesLeft
+                    ) {
+                        val delta = withIds.supplyDosesLeft - (oldSlot.supplyDosesLeft ?: 0)
+                        val kind = when {
+                            oldSlot.supplyDosesLeft == null -> SupplyChangeKind.INITIAL
+                            delta > 0 && (withIds.supplyDosesPerRefill ?: 0) > 0 &&
+                                    delta % withIds.supplyDosesPerRefill!! == 0 -> SupplyChangeKind.REFILL
+                            else -> SupplyChangeKind.CORRECTION
+                        }
+                        withIds = InventoryService.logSupplyChange(
+                            withIds, kind, delta = delta, balanceAfter = withIds.supplyDosesLeft ?: 0
+                        )
+                    }
                     _items.add(withIds)
                     if (withIds.type == ItemType.Medicine) {
                         NotificationReceiver.scheduleNotification(getApplication(), withIds)
@@ -795,10 +928,45 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Applies supply (inventory) settings from the editor to all entries of the
-     * item's group. `null` supply turns tracking off. Turning tracking on for a
-     * group that had none seeds every dose slot with the full amount; switching
-     * to per-refill mode scales an existing running count.
+     * item's group. `null` supply turns tracking off. The editor always sends
+     * the user's explicit values, so [InventoryEntry.dosesLeft] is stored as-is:
+     * typing a corrected count must win over any derived value (an earlier
+     * version scaled the count by the refill-size ratio, silently discarding
+     * what the user typed).
      */
+    /**
+     * One-tap refill: adds a full refill (or a custom [amount]) to the tracked
+     * count of every slot in the group and logs it as [SupplyChangeKind.REFILL].
+     */
+    fun refillSupply(item: MedData, amount: Int? = null) {
+        if (item.type != ItemType.Medicine) return
+        val refillSize = amount ?: item.supplyDosesPerRefill ?: return
+        if (refillSize <= 0) return
+
+        val targets = if (item.groupId != null) {
+            _items.filter { it.groupId == item.groupId }
+        } else {
+            listOf(item)
+        }
+
+        targets.forEach { target ->
+            val index = _items.indexOfFirst { it.id == target.id }
+            if (index != -1 && target.supplyDosesLeft != null) {
+                val newLeft = target.supplyDosesLeft + refillSize
+                _items[index] = InventoryService.logSupplyChange(
+                    target.copy(
+                        supplyDosesLeft = newLeft,
+                        supplyAlertShown = false
+                    ),
+                    SupplyChangeKind.REFILL,
+                    delta = +refillSize,
+                    balanceAfter = newLeft
+                )
+            }
+        }
+        saveData()
+    }
+
     fun applySupplySettings(item: MedData, supply: InventoryEntry?) {
         val targets = if (item.groupId != null) {
             _items.filter { it.groupId == item.groupId }
@@ -807,25 +975,31 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         val refillsEnabled = supply != null && supply.dosesPerRefill > 0
-        val scale = if (refillsEnabled && item.supplyDosesPerRefill != null && item.supplyDosesPerRefill > 0) {
-            supply.dosesPerRefill.toFloat() / item.supplyDosesPerRefill
-        } else 1f
 
         targets.forEach { target ->
-            val newLeft = when {
-                supply == null -> null
-                target.supplyDosesLeft == null -> supply.dosesLeft
-                refillsEnabled -> max(0, Math.round(target.supplyDosesLeft * scale))
-                else -> target.supplyDosesLeft
-            }
+            val newLeft = supply?.dosesLeft
             val index = _items.indexOfFirst { it.id == target.id }
             if (index != -1) {
-                _items[index] = target.copy(
+                var updated = target.copy(
                     supplyDosesLeft = newLeft,
                     supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { refillsEnabled },
                     supplyLowThreshold = supply?.lowThreshold,
                     supplyAlertShown = false
                 )
+                // Ledger: record manual corrections (and refill-sized bumps) per
+                // slot, only where the count actually changed.
+                if (newLeft != null && newLeft != target.supplyDosesLeft) {
+                    val delta = newLeft - (target.supplyDosesLeft ?: 0)
+                    val kind = when {
+                        target.supplyDosesLeft == null -> SupplyChangeKind.INITIAL
+                        delta > 0 && refillsEnabled && delta % supply.dosesPerRefill == 0 -> SupplyChangeKind.REFILL
+                        else -> SupplyChangeKind.CORRECTION
+                    }
+                    updated = InventoryService.logSupplyChange(
+                        updated, kind, delta = delta, balanceAfter = newLeft
+                    )
+                }
+                _items[index] = updated
             }
         }
         saveData()
@@ -853,6 +1027,26 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             _items.add(item)
         }
+        if (item.type == ItemType.Medicine) {
+            NotificationReceiver.scheduleNotification(getApplication(), item)
+        }
+        saveData()
+    }
+
+    /**
+     * Archives a medicine: schedules stop going forward (tomorrow onward),
+     * past history and dose-log days stay intact, and the med can be restored
+     * later from Settings. Undoing any alert shown for it.
+     */
+    fun archiveItem(item: MedData) {
+        val index = _items.indexOfFirst { it.id == item.id }
+        if (index == -1) return
+        val original = _items[index]
+        val updated = original.copy(endDate = LocalDate.now())
+        _items[index] = updated
+        NotificationReceiver.scheduleNotification(getApplication(), updated)
+        // Cancel any shown low-supply alert keyed to the original entry ID.
+        InventoryService.cancelLowSupplyNotification(getApplication(), original)
         saveData()
     }
 
@@ -864,16 +1058,15 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         if (index == -1) return
         // Work from the stored item, not the (possibly stale) UI copy: a dose
         // logged from a notification or watch may have changed history or stock
-        // since this card was rendered.
+        // since this card was rendered. applyTakeIfNew keeps the stock change
+        // idempotent — one dose can never be decremented twice.
         val current = _items[index]
-        val newHistory = HashMap(current.takenHistory)
-        if (newHistory.containsKey(date)) newHistory.remove(date) else newHistory[date] =
-            LocalTime.now()
-
-        _items[index] = applyInventoryChange(
+        val wasTaken = current.takenHistory.containsKey(date)
+        _items[index] = InventoryService.applyTakeIfNew(
             getApplication(),
-            current.copy(takenHistory = newHistory),
-            isTaken = newHistory.containsKey(date)
+            current,
+            date,
+            isTaken = !wasTaken
         )
         saveData()
 
@@ -883,6 +1076,51 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
             NotificationReceiver.scheduleNotification(getApplication(), _items[index])
         } catch (e: Exception) {
         }
+    }
+
+    /**
+     * Records a deliberate skip for [date] (or clears it when a skip already
+     * exists — the card's skip affordance doubles as un-skip). Mirrors
+     * [toggleMedicine]: works on the stored copy, saves, and re-arms the alarm
+     * so a skipped slot stops firing reminders.
+     */
+    fun toggleSkip(item: MedData, date: LocalDate, reason: SkipReason, note: String?) {
+        if (item.type != ItemType.Medicine) return
+        if (date.isAfter(LocalDate.now())) return
+
+        val index = _items.indexOfFirst { it.id == item.id }
+        if (index == -1) return
+        val current = _items[index]
+        val newSkips = HashMap(current.skipHistory)
+        if (newSkips.containsKey(date)) newSkips.remove(date) else newSkips[date] =
+            SkipRecord(reason = reason, time = LocalTime.now(), note = note?.trim()?.ifEmpty { null })
+
+        _items[index] = current.copy(skipHistory = newSkips)
+        saveData()
+
+        try {
+            NotificationReceiver.scheduleNotification(getApplication(), _items[index])
+        } catch (e: Exception) {
+        }
+    }
+
+    /**
+     * Pre-skip a scheduled dose on a future (or today) date without touching
+     * anything else — reason + optional note recorded immediately.
+     */
+    fun preSkipDose(item: MedData, date: LocalDate, reason: SkipReason, note: String?) {
+        if (item.type != ItemType.Medicine) return
+        if (date.isBefore(LocalDate.now())) return
+
+        val index = _items.indexOfFirst { it.id == item.id }
+        if (index == -1) return
+        val current = _items[index]
+        if (current.skipHistory.containsKey(date)) return
+
+        _items[index] = current.copy(
+            skipHistory = HashMap(current.skipHistory).apply { put(date, SkipRecord(reason, LocalTime.now(), note?.trim()?.ifEmpty { null }) ) }
+        )
+        saveData()
     }
 
     fun confirmIllness(item: MedData, date: LocalDate) {

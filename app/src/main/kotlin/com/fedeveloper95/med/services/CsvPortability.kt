@@ -32,7 +32,8 @@ object CsvPortability {
         "frequency_label", "creation_date", "creation_time",
         "taken_dates", "taken_times", "recurrence_days", "end_date",
         "interval_days", "notes", "display_order", "category", "notification_type",
-        "supply_doses_left", "supply_refill_size", "supply_low_threshold"
+        "supply_doses_left", "supply_refill_size", "supply_low_threshold",
+        "skipped_dates", "skipped_reasons", "skipped_times", "skipped_notes"
     )
 
     private const val LIST_SEPARATOR = "|"
@@ -42,6 +43,7 @@ object CsvPortability {
         sb.append(HEADERS.joinToString(",")).append("\r\n")
         items.forEach { m ->
             val dates = m.takenHistory.keys.sorted()
+            val skips = m.skipHistory.keys.sorted()
             val cells = listOf(
                 m.id.toString(),
                 m.groupId?.toString() ?: "",
@@ -65,7 +67,15 @@ object CsvPortability {
                 m.notificationType.toString(),
                 m.supplyDosesLeft?.toString() ?: "",
                 m.supplyDosesPerRefill?.toString() ?: "",
-                m.supplyLowThreshold?.toString() ?: ""
+                m.supplyLowThreshold?.toString() ?: "",
+                skips.joinToString(LIST_SEPARATOR),
+                skips.joinToString(LIST_SEPARATOR) {
+                    (m.skipHistory[it]?.reason ?: SkipReason.OTHER).name
+                },
+                skips.joinToString(LIST_SEPARATOR) {
+                    (m.skipHistory[it]?.time ?: LocalTime.MIDNIGHT).toString()
+                },
+                skips.joinToString(LIST_SEPARATOR) { m.skipHistory[it]?.note ?: "" }
             )
             sb.append(cells.joinToString(",") { encodeCell(it) }).append("\r\n")
         }
@@ -113,6 +123,26 @@ object CsvPortability {
                     .map { it.trim() }.filter { it.isNotEmpty() }
                     .map { parseDayOfWeek(it) }
 
+                val skipDates = cell("skipped_dates").split(LIST_SEPARATOR).map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                val skipReasons = cell("skipped_reasons").split(LIST_SEPARATOR).map { it.trim() }
+                val skipTimes = cell("skipped_times").split(LIST_SEPARATOR).map { it.trim() }
+                val skipNotes = cell("skipped_notes").split(LIST_SEPARATOR)
+                val skips = HashMap<LocalDate, SkipRecord>()
+                skipDates.forEachIndexed { si, d ->
+                    val reason = try {
+                        SkipReason.valueOf(skipReasons.getOrNull(si) ?: "")
+                    } catch (e: Exception) {
+                        SkipReason.OTHER
+                    }
+                    skips[LocalDate.parse(d)] = SkipRecord(
+                        reason = reason,
+                        time = skipTimes.getOrNull(si)?.takeIf { it.isNotEmpty() }
+                            ?.let { LocalTime.parse(it) } ?: LocalTime.MIDNIGHT,
+                        note = skipNotes.getOrNull(si)?.ifEmpty { null }
+                    )
+                }
+
                 items.add(
                     MedData(
                         id = cell("id").toLongOrNull() ?: System.nanoTime(),
@@ -134,7 +164,8 @@ object CsvPortability {
                         notificationType = cell("notification_type").toIntOrNull() ?: 0,
                         supplyDosesLeft = cell("supply_doses_left").toIntOrNull(),
                         supplyDosesPerRefill = cell("supply_refill_size").toIntOrNull(),
-                        supplyLowThreshold = cell("supply_low_threshold").toIntOrNull()
+                        supplyLowThreshold = cell("supply_low_threshold").toIntOrNull(),
+                        skipHistory = skips
                     )
                 )
             } catch (e: IllegalArgumentException) {

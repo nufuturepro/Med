@@ -15,6 +15,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.material3.rememberDatePickerState
+import com.fedeveloper95.med.ItemType
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -34,6 +37,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -41,11 +45,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Event
+import androidx.compose.material.icons.rounded.EventBusy
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
@@ -56,6 +63,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -96,18 +108,24 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.fedeveloper95.med.AVAILABLE_ICONS
 import com.fedeveloper95.med.R
+import com.fedeveloper95.med.SkipReasonSheet
 import com.fedeveloper95.med.elements.TimePicker
 import com.fedeveloper95.med.services.InventoryEntry
 import com.fedeveloper95.med.services.MedData
+import com.fedeveloper95.med.services.SkipReason
+import com.fedeveloper95.med.services.SupplyChange
+import com.fedeveloper95.med.services.SupplyChangeKind
 import com.fedeveloper95.med.ui.theme.GoogleSansFlex
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -117,7 +135,9 @@ fun MedicineBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (String, String?, String?, List<LocalTime>, List<DayOfWeek>?, String?, Int?, InventoryEntry?, Int, Long?, Long?) -> Unit,
     initialItem: MedData? = null,
-    initialText: String = ""
+    initialText: String = "",
+    onArchive: () -> Unit = {},
+    onPreSkip: (LocalDate, SkipReason, String?) -> Unit = { _, _, _ -> }
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -197,12 +217,54 @@ fun MedicineBottomSheet(
     var supplyThreshold by remember {
         mutableIntStateOf(initialItem?.supplyLowThreshold ?: 5)
     }
+    // Non-null while one of the supply numbers is being typed in an
+    // OutlinedTextField (steppers remain available around the field).
+    var editingSupplyField by remember { mutableStateOf<String?>(null) }
+    var supplyLeftInput by remember { mutableStateOf("") }
+    var supplyRefillInput by remember { mutableStateOf("") }
+    var supplyThresholdInput by remember { mutableStateOf("") }
+    val supplyFocusRequester = remember { FocusRequester() }
+
+    fun commitSupplyEdit(field: String) {
+        val current = editingSupplyField
+        if (current == field) {
+            val raw = when (field) {
+                "left" -> supplyLeftInput
+                "refill" -> supplyRefillInput
+                else -> supplyThresholdInput
+            }
+            val parsed = raw.toIntOrNull()
+            val clamped = if (parsed != null) parsed.coerceIn(0, 9999) else null
+            when (field) {
+                "left" -> if (clamped != null) supplyLeft = clamped
+                "refill" -> if (clamped != null && clamped >= 1) supplyRefill = clamped
+                else -> if (clamped != null) supplyThreshold = clamped
+            }
+        }
+        editingSupplyField = null
+    }
+
+    fun beginSupplyEdit(field: String) {
+        // Commit any other field that was being edited before switching.
+        editingSupplyField?.let { if (it != field) commitSupplyEdit(it) }
+        editingSupplyField = field
+        when (field) {
+            "left" -> supplyLeftInput = supplyLeft.toString()
+            "refill" -> supplyRefillInput = supplyRefill.toString()
+            "threshold" -> supplyThresholdInput = supplyThreshold.toString()
+        }
+    }
 
     fun inventoryEntry(): InventoryEntry? = if (supplyEnabled) InventoryEntry(
         dosesLeft = supplyLeft,
         dosesPerRefill = supplyRefill,
         lowThreshold = supplyThreshold
     ) else null
+
+    // Bring up the keyboard as soon as a supply value is tapped for typing.
+    LaunchedEffect(editingSupplyField) {
+        if (editingSupplyField != null) supplyFocusRequester.requestFocus()
+    }
 
     val focusRequester = remember { FocusRequester() }
 
@@ -495,20 +557,46 @@ fun MedicineBottomSheet(
                             SegmentedListItem(
                                 onClick = {},
                                 colors = itemColors,
-                                shapes = ListItemDefaults.segmentedShapes(index = 0, count = 3),
-                                trailingContent = {
+                                shapes = ListItemDefaults.segmentedShapes(index = 0, count = 3),                                    trailingContent = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         IconButton(onClick = {
+                                            if (editingSupplyField == "left") commitSupplyEdit("left")
                                             if (supplyLeft > 0) supplyLeft--
                                         }) {
                                             Icon(Icons.Rounded.Remove, contentDescription = null)
                                         }
-                                        Text(
-                                            text = supplyLeft.toString(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            modifier = Modifier.padding(horizontal = 8.dp)
-                                        )
+                                        if (editingSupplyField == "left") {
+                                            var leftHadFocus by remember { mutableStateOf(false) }
+                                            OutlinedTextField(
+                                                value = supplyLeftInput,
+                                                onValueChange = { supplyLeftInput = it.filter { c -> c.isDigit() }.take(4) },
+                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                                keyboardActions = KeyboardActions(onDone = { commitSupplyEdit("left") }),
+                                                singleLine = true,
+                                                isError = supplyLeftInput.toIntOrNull() == null,
+                                                textStyle = MaterialTheme.typography.titleMedium,
+                                                modifier = Modifier
+                                                    .width(88.dp)
+                                                    .height(56.dp)
+                                                    .focusRequester(supplyFocusRequester)
+                                                    .onFocusChanged {
+                                                        if (it.isFocused) leftHadFocus = true
+                                                        else if (leftHadFocus) commitSupplyEdit("left")
+                                                    },
+                                                placeholder = {
+                                                    Text(supplyLeft.toString(), style = MaterialTheme.typography.titleMedium)
+                                                }
+                                            )
+                                        } else {
+                                            TextButton(onClick = { beginSupplyEdit("left") }) {
+                                                Text(
+                                                    text = supplyLeft.toString(),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
+                                        }
                                         IconButton(onClick = {
+                                            if (editingSupplyField == "left") commitSupplyEdit("left")
                                             if (supplyLeft < 9999) supplyLeft++
                                         }) {
                                             Icon(Icons.Rounded.Add, contentDescription = null)
@@ -516,12 +604,20 @@ fun MedicineBottomSheet(
                                     }
                                 },
                                 content = {
-                                    Text(
-                                        text = stringResource(R.string.supply_doses_left),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontFamily = GoogleSansFlex
-                                    )
+                                    Column {
+                                        Text(
+                                            text = stringResource(R.string.supply_doses_left),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontFamily = GoogleSansFlex
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.supply_tap_to_edit_value),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontFamily = GoogleSansFlex
+                                        )
+                                    }
                                 }
                             )
 
@@ -532,16 +628,43 @@ fun MedicineBottomSheet(
                                 trailingContent = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         IconButton(onClick = {
+                                            if (editingSupplyField == "refill") commitSupplyEdit("refill")
                                             if (supplyRefill > 1) supplyRefill--
                                         }) {
                                             Icon(Icons.Rounded.Remove, contentDescription = null)
                                         }
-                                        Text(
-                                            text = supplyRefill.toString(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            modifier = Modifier.padding(horizontal = 8.dp)
-                                        )
+                                        if (editingSupplyField == "refill") {
+                                            var refillHadFocus by remember { mutableStateOf(false) }
+                                            OutlinedTextField(
+                                                value = supplyRefillInput,
+                                                onValueChange = { supplyRefillInput = it.filter { c -> c.isDigit() }.take(4) },
+                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                                keyboardActions = KeyboardActions(onDone = { commitSupplyEdit("refill") }),
+                                                singleLine = true,
+                                                isError = (supplyRefillInput.toIntOrNull() ?: 1) < 1,
+                                                textStyle = MaterialTheme.typography.titleMedium,
+                                                modifier = Modifier
+                                                    .width(88.dp)
+                                                    .height(56.dp)
+                                                    .focusRequester(supplyFocusRequester)
+                                                    .onFocusChanged {
+                                                        if (it.isFocused) refillHadFocus = true
+                                                        else if (refillHadFocus) commitSupplyEdit("refill")
+                                                    },
+                                                placeholder = {
+                                                    Text(supplyRefill.toString(), style = MaterialTheme.typography.titleMedium)
+                                                }
+                                            )
+                                        } else {
+                                            TextButton(onClick = { beginSupplyEdit("refill") }) {
+                                                Text(
+                                                    text = supplyRefill.toString(),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
+                                        }
                                         IconButton(onClick = {
+                                            if (editingSupplyField == "refill") commitSupplyEdit("refill")
                                             if (supplyRefill < 9999) supplyRefill++
                                         }) {
                                             Icon(Icons.Rounded.Add, contentDescription = null)
@@ -565,16 +688,43 @@ fun MedicineBottomSheet(
                                 trailingContent = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         IconButton(onClick = {
+                                            if (editingSupplyField == "threshold") commitSupplyEdit("threshold")
                                             if (supplyThreshold > 0) supplyThreshold--
                                         }) {
                                             Icon(Icons.Rounded.Remove, contentDescription = null)
                                         }
-                                        Text(
-                                            text = supplyThreshold.toString(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            modifier = Modifier.padding(horizontal = 8.dp)
-                                        )
+                                        if (editingSupplyField == "threshold") {
+                                            var thresholdHadFocus by remember { mutableStateOf(false) }
+                                            OutlinedTextField(
+                                                value = supplyThresholdInput,
+                                                onValueChange = { supplyThresholdInput = it.filter { c -> c.isDigit() }.take(4) },
+                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                                keyboardActions = KeyboardActions(onDone = { commitSupplyEdit("threshold") }),
+                                                singleLine = true,
+                                                isError = supplyThresholdInput.toIntOrNull() == null,
+                                                textStyle = MaterialTheme.typography.titleMedium,
+                                                modifier = Modifier
+                                                    .width(88.dp)
+                                                    .height(56.dp)
+                                                    .focusRequester(supplyFocusRequester)
+                                                    .onFocusChanged {
+                                                        if (it.isFocused) thresholdHadFocus = true
+                                                        else if (thresholdHadFocus) commitSupplyEdit("threshold")
+                                                    },
+                                                placeholder = {
+                                                    Text(supplyThreshold.toString(), style = MaterialTheme.typography.titleMedium)
+                                                }
+                                            )
+                                        } else {
+                                            TextButton(onClick = { beginSupplyEdit("threshold") }) {
+                                                Text(
+                                                    text = supplyThreshold.toString(),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
+                                        }
                                         IconButton(onClick = {
+                                            if (editingSupplyField == "threshold") commitSupplyEdit("threshold")
                                             if (supplyThreshold < 9999) supplyThreshold++
                                         }) {
                                             Icon(Icons.Rounded.Add, contentDescription = null)
@@ -591,6 +741,14 @@ fun MedicineBottomSheet(
                                 }
                             )
                         }
+                    }
+                }
+
+                if (supplyEnabled && initialItem != null && initialItem.supplyLedger.isNotEmpty()) {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+
+                    item {
+                        SupplyLedgerCard(ledger = initialItem.supplyLedger)
                     }
                 }
 
@@ -875,6 +1033,25 @@ fun MedicineBottomSheet(
                         }
                     }
                 }
+
+                // Skip-in-advance lives at the bottom of the editor, just
+                // above the action row, so it's reachable without scrolling
+                // past the supply section.
+                if (initialItem != null && initialItem.type == ItemType.Medicine) {
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
+
+                    item {
+                        PreskipCard(
+                            item = initialItem,
+                            onSkip = { date, reason, note ->
+                                onPreSkip(date, reason, note)
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    if (!sheetState.isVisible) onDismiss()
+                                }
+                            }
+                        )
+                    }
+                }
             }
 
             Surface(
@@ -910,8 +1087,33 @@ fun MedicineBottomSheet(
                         )
                     }
 
+                    if (initialItem != null && initialItem.type == ItemType.Medicine) {
+                        OutlinedButton(
+                            onClick = { onArchive() },
+                            modifier = Modifier.height(50.dp),
+                            shape = RoundedCornerShape(50),
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            Icon(
+                                Icons.Rounded.Archive,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                stringResource(R.string.archive_med),
+                                fontFamily = GoogleSansFlex,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
                     Button(
                         onClick = {
+                            // Commit any supply value still being typed before
+                            // evaluating the save, so the typed count is what lands.
+                            editingSupplyField?.let { commitSupplyEdit(it) }
                             if (text.isNotBlank()) {
                                 if (initialItem != null) {
                                     val isModified = run {
@@ -947,7 +1149,8 @@ fun MedicineBottomSheet(
                                                         supplyRefill != (initialItem.supplyDosesPerRefill
                                                             ?: 0) ||
                                                         supplyThreshold != (initialItem.supplyLowThreshold
-                                                            ?: 0)))
+                                                            ?: 0))) ||
+                                                editingSupplyField != null
                                     }
 
                                     if (isModified) {
@@ -1071,6 +1274,160 @@ fun OutlinedSingleSelectButtonGroup(
                 )
             }
         }
+    }
+}
+
+/**
+ * Recent stock changes for this medicine (newest first) so count
+ * discrepancies can be traced: doses taken, refunds, refills, corrections.
+ */
+@Composable
+fun SupplyLedgerCard(ledger: List<SupplyChange>) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.ledger_title),
+                fontFamily = GoogleSansFlex,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ledger.takeLast(8).reversed().forEach { change ->
+                val deltaText = if (change.delta > 0) "+${change.delta}" else "${change.delta}"
+                val kindLabel = stringResource(
+                    when (change.kind) {
+                        SupplyChangeKind.TAKEN -> R.string.ledger_kind_taken
+                        SupplyChangeKind.REFUND -> R.string.ledger_kind_refund
+                        SupplyChangeKind.CORRECTION -> R.string.ledger_kind_correction
+                        SupplyChangeKind.REFILL -> R.string.ledger_kind_refill
+                        SupplyChangeKind.INITIAL -> R.string.ledger_kind_initial
+                    }
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "$kindLabel  $deltaText → ${change.balanceAfter}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = GoogleSansFlex,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = change.date.format(
+                            DateTimeFormatter.ofPattern("dd/MM").withLocale(Locale.getDefault())
+                        ) + " " + change.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = GoogleSansFlex,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Card in the editor for pre-skipping a dose on a chosen future/today date
+ * (travel, fasting window, procedure prep, …). Reason + optional note only;
+ * the schedule itself is not modified.
+ */
+@Composable
+fun PreskipCard(
+    item: MedData,
+    onSkip: (LocalDate, SkipReason, String?) -> Unit
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showReason by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.preskip_title),
+                fontFamily = GoogleSansFlex,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.preskip_desc),
+                fontFamily = GoogleSansFlex,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            FilledTonalButton(
+                onClick = { showDatePicker = true },
+                enabled = !item.skipHistory.containsKey(LocalDate.now())
+            ) {
+                Icon(Icons.Rounded.EventBusy, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = selectedDate?.let {
+                        stringResource(
+                            R.string.preskip_pick_date_done,
+                            it.format(DateTimeFormatter.ofPattern("EEE, dd MMM").withLocale(Locale.getDefault()))
+                        )
+                    } ?: stringResource(R.string.preskip_pick_date),
+                    fontFamily = GoogleSansFlex
+                )
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        val state = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        state.selectedDateMillis?.let { millis ->
+                            selectedDate = LocalDate.ofEpochDay(millis / 86400000)
+                            showDatePicker = false
+                            showReason = true
+                        }
+                    },
+                    enabled = state.selectedDateMillis != null
+                ) { Text(stringResource(R.string.alarm_skip_next)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.alarm_skip_cancel)) }
+            }
+        ) {
+            DatePicker(state = state)
+        }
+    }
+
+    if (showReason) {
+        SkipReasonSheet(
+            onDismiss = { showReason = false },
+            onConfirm = { reason, note ->
+                showReason = false
+                selectedDate?.let { onSkip(it, reason, note) }
+            }
+        )
     }
 }
 

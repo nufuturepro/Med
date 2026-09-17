@@ -1,8 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTextApi::class)
+@file:OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalTextApi::class,
+    ExperimentalLayoutApi::class
+)
 
 package com.fedeveloper95.med
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -24,12 +29,15 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,19 +55,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MedicalServices
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -83,6 +98,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.fedeveloper95.med.services.AlarmService
 import com.fedeveloper95.med.services.DataRepository
+import com.fedeveloper95.med.services.NotificationReceiver
+import com.fedeveloper95.med.services.SkipReason
 import com.fedeveloper95.med.ui.theme.GoogleSansFlex
 import com.fedeveloper95.med.ui.theme.MedTheme
 import kotlinx.coroutines.launch
@@ -179,6 +196,21 @@ class AlarmActivity : ComponentActivity() {
                             }
                             sendBroadcast(actionIntent)
                             finishAndRemoveTask()
+                        },
+                        onSkip = { reason, note ->
+                            stopService(Intent(this@AlarmActivity, AlarmService::class.java))
+                            val pending = NotificationReceiver.prepareSkipPendingIntent(
+                                this@AlarmActivity,
+                                itemIds,
+                                notifId,
+                                reason.name,
+                                note
+                            )
+                            try {
+                                pending.send()
+                            } catch (_: PendingIntent.CanceledException) {
+                            }
+                            finishAndRemoveTask()
                         }
                     )
                 }
@@ -274,8 +306,10 @@ fun AlarmScreen(
     colorCode: String?,
     isGrouped: Boolean = false,
     onTake: () -> Unit,
-    onSnooze: () -> Unit
+    onSnooze: () -> Unit,
+    onSkip: (reason: SkipReason, note: String?) -> Unit
 ) {
+    var showSkipSheet by remember { mutableStateOf(false) }
     val icSick = ImageVector.vectorResource(R.drawable.ic_sick)
     val icMind = ImageVector.vectorResource(R.drawable.ic_mind)
     val icMixture = ImageVector.vectorResource(R.drawable.ic_mixture)
@@ -355,6 +389,7 @@ fun AlarmScreen(
             AlarmSlider(
                 onTake = onTake,
                 onSnooze = onSnooze,
+                onSkip = { showSkipSheet = true },
                 modifier = Modifier.widthIn(max = 400.dp)
             )
 
@@ -392,14 +427,134 @@ fun AlarmScreen(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        TextButton(onClick = { showSkipSheet = true }) {
+            Icon(
+                imageVector = Icons.Rounded.SkipNext,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.alarm_skip_action),
+                fontFamily = GoogleSansFlex,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
     }
+
+    if (showSkipSheet) {
+        SkipReasonSheet(
+            onDismiss = { showSkipSheet = false },
+            onConfirm = { reason, note ->
+                showSkipSheet = false
+                onSkip(reason, note)
+            }
+        )
+    }
+}
+
+@Composable
+fun SkipReasonSheet(
+    onDismiss: () -> Unit,
+    onConfirm: (reason: SkipReason, note: String?) -> Unit
+) {
+    var selected by remember { mutableStateOf<SkipReason?>(null) }
+    var note by remember { mutableStateOf("") }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.alarm_skip_title),
+                fontFamily = GoogleSansFlex,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                SkipReason.entries.forEach { reason ->
+                    FilterChip(
+                        selected = selected == reason,
+                        onClick = { selected = reason },
+                        label = {
+                            Text(
+                                text = skipReasonLabel(reason),
+                                fontFamily = GoogleSansFlex,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.alarm_skip_note_label)) },
+                placeholder = { Text(stringResource(R.string.alarm_skip_note_hint)) },
+                minLines = 1,
+                maxLines = 3
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.alarm_skip_cancel))
+                }
+                Button(
+                    onClick = { selected?.let { onConfirm(it, note.ifBlank { null }) } },
+                    enabled = selected != null,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.alarm_skip_confirm))
+                }
+            }
+        }
+    }
+}
+
+fun skipReasonLabel(reason: SkipReason): String = when (reason) {
+    SkipReason.ADVERSE_REACTION -> "Allergic / adverse reaction"
+    SkipReason.DOCTOR_DIRECTED -> "Doctor / clinic directed"
+    SkipReason.PROCEDURE_FASTING -> "Upcoming procedure / fasting"
+    SkipReason.VITALS_OUT_OF_RANGE -> "Vitals out of range"
+    SkipReason.DOUBLE_DOSE_PROTECTION -> "Double dose protection"
+    SkipReason.ACUTE_ILLNESS -> "Acute illness / vomiting"
+    SkipReason.SUPPLY_MISSING -> "Missing supply / expired"
+    SkipReason.OTHER -> "Patient discretion / other"
 }
 
 @Composable
 fun AlarmSlider(
     onTake: () -> Unit,
     onSnooze: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSkip: (() -> Unit)? = null
 ) {
     val scope = rememberCoroutineScope()
     val offsetX = remember { Animatable(0f) }
@@ -429,7 +584,11 @@ fun AlarmSlider(
                 imageVector = Icons.Rounded.Snooze,
                 contentDescription = stringResource(R.string.alarm_snooze_desc),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier
+                    .size(32.dp)
+                    .then(
+                        if (onSkip != null) Modifier.clickable(onClick = onSkip) else Modifier
+                    )
             )
             Icon(
                 imageVector = Icons.Rounded.Check,

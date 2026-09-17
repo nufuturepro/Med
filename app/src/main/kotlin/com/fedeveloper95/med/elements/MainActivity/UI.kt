@@ -36,6 +36,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Autorenew
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MedicalServices
@@ -43,11 +44,13 @@ import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -104,7 +107,9 @@ fun MedDataCard(
     shape: Shape,
     onToggle: () -> Unit,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    onSkip: () -> Unit = {},
+    onRefill: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
@@ -155,6 +160,8 @@ fun MedDataCard(
     val isTakenToday = if (isMedicine) item.takenHistory.containsKey(currentViewDate) else false
     val timestamp = if (isMedicine) item.takenHistory[currentViewDate] else item.creationTime
     val isToday = LocalDate.now() == currentViewDate
+    val skipRecord = if (isMedicine) item.skipHistory[currentViewDate] else null
+    val isSkippedToday = skipRecord != null
 
     val toggleEnabled = isMedicine && !currentViewDate.isAfter(LocalDate.now())
 
@@ -163,6 +170,8 @@ fun MedDataCard(
     // within the window actually un-logs the dose. Tapping again while pending
     // re-confirms the dose instead of toggling history.
     var pendingUntakeUntil by remember(item.id) { mutableStateOf(0L) }
+    // Two-tap confirmation for the one-tap refill, same pattern as un-take.
+    var pendingRefillUntil by remember(item.id) { mutableStateOf(0L) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -355,6 +364,27 @@ fun MedDataCard(
                                     overflow = TextOverflow.Ellipsis,
                                     softWrap = false
                                 )
+                            } else if (isSkippedToday && skipRecord != null) {
+                                val skipTime =
+                                    skipRecord.time.format(DateTimeFormatter.ofPattern("HH:mm"))
+                                Text(
+                                    text = if (isToday) {
+                                        stringResource(R.string.status_skipped_format, skipTime)
+                                    } else {
+                                        stringResource(
+                                            R.string.status_skipped_date_format,
+                                            currentViewDate.format(DateTimeFormatter.ofPattern("dd/MM")),
+                                            skipTime
+                                        )
+                                    },
+                                    fontFamily = GoogleSansFlex,
+                                    fontWeight = FontWeight.Normal,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.85f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    softWrap = false
+                                )
                             } else {
                                 Text(
                                     stringResource(
@@ -410,7 +440,8 @@ fun MedDataCard(
             },
             trailingContent = if (isMedicine) {
                 {
-                    Box(contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(contentAlignment = Alignment.Center) {
                         if (alpha.value > 0f) {
                             Icon(
                                 painter = painterResource(id = currentShape),
@@ -459,6 +490,59 @@ fun MedDataCard(
                             },
                             enabled = toggleEnabled
                         )
+                        // Small action row under the radio (only while the
+                        // dose is still open): Skip plus one-tap Refill.
+                        if (!isTakenToday && toggleEnabled) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (!isSkippedToday) {
+                                    TextButton(
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onSkip()
+                                        },
+                                        enabled = !isSkippedToday,
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                        modifier = Modifier.height(28.dp)
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.card_skip_action),
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
+                                }
+                                if (item.supplyDosesLeft != null && item.supplyDosesPerRefill != null) {
+                                    IconButton(
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            val now = System.currentTimeMillis()
+                                            if (now < pendingRefillUntil) {
+                                                pendingRefillUntil = 0L
+                                                onRefill()
+                                            } else {
+                                                pendingRefillUntil = now + UNTAKE_CONFIRM_WINDOW_MS
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(
+                                                        R.string.tap_again_to_refill,
+                                                        item.supplyDosesPerRefill
+                                                    ),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.Autorenew,
+                                            contentDescription = stringResource(R.string.card_refill_desc),
+                                            modifier = Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                     }
                 }
             } else null,

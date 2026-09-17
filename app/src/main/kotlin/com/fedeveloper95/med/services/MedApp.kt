@@ -100,6 +100,7 @@ import com.fedeveloper95.med.IllnessCard
 import com.fedeveloper95.med.ItemType
 import com.fedeveloper95.med.R
 import com.fedeveloper95.med.SettingsActivity
+import com.fedeveloper95.med.SkipReasonSheet
 import com.fedeveloper95.med.SwipeableSquishItem
 import com.fedeveloper95.med.elements.MainActivity.CommunityBottomSheet
 import com.fedeveloper95.med.elements.MainActivity.EventBottomSheet
@@ -139,6 +140,7 @@ fun MedApp(
     var showMedicineDialog by remember { mutableStateOf(false) }
     var showEventDialog by remember { mutableStateOf(false) }
     var showIllnessDialog by remember { mutableStateOf(false) }
+    var skipRequest by remember { mutableStateOf<Pair<MedData, LocalDate>?>(null) }
     var editingItem by remember { mutableStateOf<MedData?>(null) }
     var preFilledText by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -876,6 +878,15 @@ fun MedApp(
                                                                                 onLongClick = {
                                                                                     editingItem =
                                                                                         item
+                                                                                },
+                                                                                onSkip = {
+                                                                                    skipRequest =
+                                                                                        item to pageDate
+                                                                                },
+                                                                                onRefill = {
+                                                                                    viewModel.refillSupply(
+                                                                                        item
+                                                                                    )
                                                                                 }
                                                                             )
                                                                         }
@@ -1144,6 +1155,15 @@ fun MedApp(
                                                                                 onLongClick = {
                                                                                     editingItem =
                                                                                         item
+                                                                                },
+                                                                                onSkip = {
+                                                                                    skipRequest =
+                                                                                        item to pageDate
+                                                                                },
+                                                                                onRefill = {
+                                                                                    viewModel.refillSupply(
+                                                                                        item
+                                                                                    )
                                                                                 }
                                                                             )
                                                                         }
@@ -1257,6 +1277,14 @@ fun MedApp(
                             rangeEnd,
                             supply
                         )
+                        editingItem = null
+                    },
+                    onArchive = {
+                        viewModel.archiveItem(itemToEdit)
+                        editingItem = null
+                    },
+                    onPreSkip = { date, reason, note ->
+                        viewModel.preSkipDose(itemToEdit, date, reason, note)
                         editingItem = null
                     },
                     initialItem = itemToEdit
@@ -1377,5 +1405,15 @@ fun MedApp(
 
     if (noteToShow != null) {
         NotesBottomSheet(notes = noteToShow!!, onDismiss = { noteToShow = null })
+    }
+
+    skipRequest?.let { (item, date) ->
+        SkipReasonSheet(
+            onDismiss = { skipRequest = null },
+            onConfirm = { reason, note ->
+                viewModel.toggleSkip(item, date, reason, note)
+                skipRequest = null
+            }
+        )
     }
 }

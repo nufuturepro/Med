@@ -41,7 +41,34 @@ class NotificationReceiver : BroadcastReceiver() {
         const val ACTION_SHOW_NOTIFICATION = "ACTION_SHOW_NOTIFICATION"
         const val ACTION_TAKEN = "ACTION_TAKEN"
         const val ACTION_SNOOZE = "ACTION_SNOOZE"
+        const val ACTION_SKIP = "ACTION_SKIP"
         const val ACTION_RESCHEDULE_ALL = "ACTION_RESCHEDULE_ALL"
+
+        /**
+         * Builds the PendingIntent used by alarm UI / notification actions to
+         * record a deliberate skip (with reason + note) for the given meds.
+         */
+        fun prepareSkipPendingIntent(
+            context: Context,
+            itemIds: LongArray,
+            notifId: Int,
+            reason: String,
+            note: String?
+        ): PendingIntent {
+            val intent = Intent(context, NotificationReceiver::class.java).apply {
+                action = ACTION_SKIP
+                putExtra("ITEM_IDS", itemIds)
+                putExtra("NOTIF_ID", notifId)
+                putExtra("SKIP_REASON", reason)
+                putExtra("SKIP_NOTE", note)
+            }
+            return PendingIntent.getBroadcast(
+                context,
+                notifId + 300000,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
 
         fun scheduleNotification(context: Context, item: MedData) {
             if (item.type != ItemType.Medicine) return
@@ -160,16 +187,21 @@ class NotificationReceiver : BroadcastReceiver() {
                 val items = DataRepository.loadData(context)
                 val triggerItem = items.find { it.id == triggerItemId } ?: return
 
+                // The same eligibility rules apply to snoozed and fresh
+                // reminders alike: a dose that was taken (or skipped) between
+                // the snooze and its re-fire must not pop up again.
+                val isDueNow: (MedData) -> Boolean = { item ->
+                    item.type == ItemType.Medicine &&
+                            item.creationTime == triggerItem.creationTime &&
+                            isValidDate(item, LocalDate.now()) &&
+                            // Skip meds already logged or skipped today.
+                            !item.takenHistory.containsKey(LocalDate.now()) &&
+                            !item.skipHistory.containsKey(LocalDate.now())
+                }
                 val groupItems = if (isSnooze) {
-                    listOf(triggerItem)
+                    listOf(triggerItem).filter(isDueNow)
                 } else {
-                    items.filter {
-                        it.type == ItemType.Medicine &&
-                                it.creationTime == triggerItem.creationTime &&
-                                isValidDate(it, LocalDate.now()) &&
-                                // Skip meds already logged today (e.g. taken early).
-                                !it.takenHistory.containsKey(LocalDate.now())
-                    }
+                    items.filter(isDueNow)
                 }
 
                 val globalShowNotif = prefs.getBoolean(PREF_SHOW_NOTIFICATIONS, true)
@@ -334,18 +366,85 @@ class NotificationReceiver : BroadcastReceiver() {
                         val index = items.indexOfFirst { it.id == id }
                         if (index != -1) {
                             val item = items[index]
-                            val newHistory = HashMap(item.takenHistory)
-                            newHistory[LocalDate.now()] = LocalTime.now()
-                            items[index] = item.copy(takenHistory = newHistory)
-                            items[index] = applyInventoryChange(context, items[index], isTaken = true)
-                            isDataUpdated = true
-                            scheduleNotification(context, items[index])
+                            // Idempotent: a second Take for an already-logged
+                            // dose must not decrement stock again.
+                            val updated = InventoryService.applyTakeIfNew(
+                                context,
+                                item,
+                                LocalDate.now(),
+                                isTaken = true
+                            )
+                            if (updated !== item) {
+                                items[index] = updated
+                                isDataUpdated = true
+                                scheduleNotification(context, items[index])
+                            }
                         }
                     }
 
                     if (isDataUpdated) {
                         DataRepository.saveData(context, items)
                         InventoryService.evaluateAll(context, items)
+                        DataRepository.saveData(context, items)
+                        context.sendBroadcast(
+                            Intent("com.fedeveloper95.med.REFRESH_DATA").setPackage(
+                                context.packageName
+                            )
+                        )
+                    }
+
+                    val notifId = intent.getIntExtra("NOTIF_ID", -1)
+                    if (notifId != -1) {
+                        val notifManager =
+                            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        notifManager.cancel(notifId)
+                    } else if (itemIds.size == 1) {
+                        val notifManager =
+                            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        notifManager.cancel(itemIds[0].toInt())
+                    }
+
+                    context.sendBroadcast(Intent("ACTION_CLOSE_ALARM_ACTIVITY"))
+                }
+            }
+
+            ACTION_SKIP -> {
+                val itemIds = intent.getLongArrayExtra("ITEM_IDS") ?: run {
+                    val singleId = intent.getLongExtra("ITEM_ID", -1L)
+                    if (singleId != -1L) longArrayOf(singleId) else null
+                }
+
+                if (itemIds != null) {
+                    val reasonName = intent.getStringExtra("SKIP_REASON")
+                    val reason = try {
+                        SkipReason.valueOf(reasonName ?: "")
+                    } catch (e: Exception) {
+                        SkipReason.OTHER
+                    }
+                    val note = intent.getStringExtra("SKIP_NOTE")
+                    val today = LocalDate.now()
+                    val items = DataRepository.loadData(context).toMutableList()
+                    var isDataUpdated = false
+
+                    for (id in itemIds) {
+                        val index = items.indexOfFirst { it.id == id }
+                        if (index != -1 && items[index].type == ItemType.Medicine &&
+                            !items[index].skipHistory.containsKey(today)
+                        ) {
+                            val item = items[index]
+                            val newSkips = HashMap(item.skipHistory)
+                            newSkips[today] = SkipRecord(
+                                reason = reason,
+                                time = LocalTime.now(),
+                                note = note?.trim()?.ifEmpty { null }
+                            )
+                            items[index] = item.copy(skipHistory = newSkips)
+                            isDataUpdated = true
+                            scheduleNotification(context, items[index])
+                        }
+                    }
+
+                    if (isDataUpdated) {
                         DataRepository.saveData(context, items)
                         context.sendBroadcast(
                             Intent("com.fedeveloper95.med.REFRESH_DATA").setPackage(

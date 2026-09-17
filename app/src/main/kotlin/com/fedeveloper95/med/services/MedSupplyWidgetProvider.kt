@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.widget.RemoteViews
+import java.time.LocalDate
 import com.fedeveloper95.med.ItemType
 import com.fedeveloper95.med.MainActivity
 import com.fedeveloper95.med.R
@@ -57,8 +58,10 @@ class MedSupplyWidgetProvider : AppWidgetProvider() {
                 emptyList()
             }
 
+            val today = LocalDate.now()
             val tracked = items.filter {
-                it.type == ItemType.Medicine && it.supplyDosesLeft != null
+                it.type == ItemType.Medicine && it.supplyDosesLeft != null &&
+                        !today.isAfter(it.endDate)
             }
 
             val views = RemoteViews(context.packageName, R.layout.med_supply_widget)

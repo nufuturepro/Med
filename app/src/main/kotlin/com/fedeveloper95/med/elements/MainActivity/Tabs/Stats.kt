@@ -31,11 +31,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -87,7 +89,10 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 enum class DayStatus {
-    ALL_TAKEN, PARTIAL, NONE_TAKEN, NO_MEDS, FUTURE
+    ALL_TAKEN, PARTIAL, NONE_TAKEN, NO_MEDS, FUTURE,
+
+    /** Every scheduled dose accounted for, at least one via a recorded skip. */
+    SKIPPED
 }
 
 fun getScheduledMedsForDate(date: LocalDate, items: List<MedData>): List<MedData> {
@@ -114,13 +119,18 @@ fun getStatusForDate(date: LocalDate, items: List<MedData>): DayStatus {
     if (scheduledMeds.isEmpty()) return DayStatus.NO_MEDS
 
     val takenCount = scheduledMeds.count { it.takenHistory.containsKey(date) }
+    val skippedCount = scheduledMeds.count { it.skipHistory.containsKey(date) }
 
     return when {
-        takenCount == 0 -> DayStatus.NONE_TAKEN
+        takenCount + skippedCount == 0 -> DayStatus.NONE_TAKEN
+        // Fully accounted: all taken, or a mix of taken + skipped / all skipped.
         takenCount == scheduledMeds.size -> DayStatus.ALL_TAKEN
+        takenCount + skippedCount == scheduledMeds.size -> DayStatus.SKIPPED
         else -> DayStatus.PARTIAL
     }
-}
+}    /** Number of recorded skips across all meds scheduled on [date]. */
+    fun getSkipCountForDate(date: LocalDate, items: List<MedData>): Int =
+        items.count { it.type == ItemType.Medicine && it.skipHistory.containsKey(date) }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -166,17 +176,18 @@ fun StatsTab(
                     val scheduled = getScheduledMedsForDate(dateCursor, allMeds)
                     if (scheduled.isNotEmpty()) {
                         val takenCount = scheduled.count { it.takenHistory.containsKey(dateCursor) }
+                        val skippedCount = scheduled.count { it.skipHistory.containsKey(dateCursor) }
                         val scheduledCount = scheduled.size
 
                         val countForStats = !dateCursor.isEqual(today) || takenCount > 0
 
                         if (countForStats) {
                             totalScheduled += scheduledCount
-                            totalTaken += takenCount
-                            totalMissed += (scheduledCount - takenCount)
+                            totalTaken += takenCount + skippedCount
+                            totalMissed += (scheduledCount - takenCount - skippedCount)
                         }
 
-                        if (takenCount == scheduledCount && scheduledCount > 0) {
+                        if (takenCount + skippedCount == scheduledCount && scheduledCount > 0) {
                             currentStreak++
                             if (currentStreak > maxStreak) maxStreak = currentStreak
                         } else if (countForStats) {
@@ -412,10 +423,15 @@ fun CalendarCard(
                 CalendarGrid(
                     currentMonth = pageMonth,
                     today = today,
+                    items = items,
                     onDateClick = onNavigateToHome,
                     getStatusForDate = { date -> getStatusForDate(date, items) }
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            CalendarLegend()
         }
     }
 }
@@ -509,6 +525,7 @@ fun CalendarHeader(
 fun CalendarGrid(
     currentMonth: YearMonth,
     today: LocalDate,
+    items: List<MedData>,
     onDateClick: (LocalDate) -> Unit,
     getStatusForDate: (LocalDate) -> DayStatus
 ) {
@@ -566,6 +583,7 @@ fun CalendarGrid(
                             date = date,
                             status = status,
                             isToday = isToday,
+                            skipCount = getSkipCountForDate(date, items),
                             modifier = Modifier.weight(1f),
                             onClick = { onDateClick(date) }
                         )
@@ -583,6 +601,7 @@ fun CalendarDayCell(
     status: DayStatus,
     isToday: Boolean,
     modifier: Modifier = Modifier,
+    skipCount: Int = 0,
     onClick: () -> Unit
 ) {
     val containerColor by animateColorAsState(
@@ -590,6 +609,7 @@ fun CalendarDayCell(
             DayStatus.ALL_TAKEN -> MaterialTheme.colorScheme.primary
             DayStatus.PARTIAL -> MaterialTheme.colorScheme.secondary
             DayStatus.NONE_TAKEN -> MaterialTheme.colorScheme.error
+            DayStatus.SKIPPED -> MaterialTheme.colorScheme.tertiary
             DayStatus.NO_MEDS -> Color.Transparent
             DayStatus.FUTURE -> Color.Transparent
         },
@@ -601,6 +621,7 @@ fun CalendarDayCell(
         DayStatus.ALL_TAKEN -> MaterialTheme.colorScheme.onPrimary
         DayStatus.PARTIAL -> MaterialTheme.colorScheme.onSecondary
         DayStatus.NONE_TAKEN -> MaterialTheme.colorScheme.onError
+        DayStatus.SKIPPED -> MaterialTheme.colorScheme.onTertiary
         DayStatus.FUTURE -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
         else -> MaterialTheme.colorScheme.onSurface
     }
@@ -636,12 +657,61 @@ fun CalendarDayCell(
             ) { onClick() },
         contentAlignment = Alignment.Center
     ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = date.dayOfMonth.toString(),
+                style = MaterialTheme.typography.bodyLarge,
+                fontFamily = GoogleSansFlex,
+                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                color = textColor
+            )
+            // Small dot(s) under the day number: one per skipped dose that day,
+            // so a skipped day reads differently from a fully taken or missed one.
+            if (skipCount > 0) {
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    repeat(skipCount.coerceAtMost(3)) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(textColor.copy(alpha = 0.85f))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarLegend() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LegendItem(color = MaterialTheme.colorScheme.primary, label = stringResource(R.string.legend_all_taken))
+        LegendItem(color = MaterialTheme.colorScheme.secondary, label = stringResource(R.string.legend_partial))
+        LegendItem(color = MaterialTheme.colorScheme.tertiary, label = stringResource(R.string.legend_skipped))
+        LegendItem(color = MaterialTheme.colorScheme.error, label = stringResource(R.string.legend_missed))
+    }
+}
+
+@Composable
+private fun LegendItem(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = date.dayOfMonth.toString(),
-            style = MaterialTheme.typography.bodyLarge,
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
             fontFamily = GoogleSansFlex,
-            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-            color = textColor
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

@@ -1,7 +1,9 @@
 package com.fedeveloper95.med.services
 
 import com.fedeveloper95.med.ItemType
+import com.fedeveloper95.med.elements.MainActivity.Tabs.DayStatus
 import com.fedeveloper95.med.elements.MainActivity.Tabs.getScheduledMedsForDate
+import com.fedeveloper95.med.elements.MainActivity.Tabs.getStatusForDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -291,5 +293,207 @@ class MedUpdatePlannerTest {
         val evening = med(2, time = LocalTime.of(20, 0))
         val scheduled = getScheduledMedsForDate(today, listOf(morning, evening))
         assertEquals(2, scheduled.size)
+    }
+
+    // ------------------------------------------------------------ Archive guard
+
+    @Test
+    fun `evaluateAll never alerts for meds whose schedule has ended`() {
+        val archived = med(
+            1,
+            end = today.minusDays(1),
+            supplyLeft = 2
+        ).copy(supplyAlertShown = false)
+        val active = med(2, supplyLeft = 2)
+
+        val items = mutableListOf(archived, active)
+        val changed = InventoryService.evaluateAll(null, items)
+
+        assertTrue(changed)
+        assertFalse(items[0].supplyAlertShown)
+        assertTrue(items[1].supplyAlertShown)
+    }
+
+    // ------------------------------------------------------- skip preservation
+
+    @Test
+    fun `plain rebuild keeps each slot's skip records`() {
+        val skipDay = today.withDayOfMonth(10)
+        val record = SkipRecord(SkipReason.ACUTE_ILLNESS, LocalTime.of(9, 0), "stomach bug")
+        val slot = med(1, history = hist(5, 6))
+            .copy(skipHistory = HashMap(mapOf(skipDay to record)))
+
+        val result = MedUpdatePlanner.plan(
+            noopRequest.copy(title = "Sertraline renamed"),
+            supply = null,
+            groupMembers = listOf(slot)
+        )
+
+        val plan = result as MedUpdatePlanner.Plan.Rebuild
+        assertEquals(1, plan.entries.size)
+        assertEquals(mapOf(skipDay to record), plan.entries[0].skipHistory)
+    }
+
+    @Test
+    fun `range rebuild splits skip records around the edited window`() {
+        val editDay = today.withDayOfMonth(12)
+        val earlySkip = today.withDayOfMonth(5)
+        val lateSkip = today.withDayOfMonth(20)
+        val record = SkipRecord(SkipReason.DOCTOR_DIRECTED, LocalTime.of(8, 0), null)
+        val slot = med(1, end = LocalDate.of(2026, 9, 30))
+            .copy(
+                skipHistory = HashMap(
+                    mapOf(
+                        earlySkip to record,
+                        lateSkip to record
+                    )
+                )
+            )
+
+        val result = MedUpdatePlanner.plan(
+            noopRequest.copy(title = "Renamed", rangeStart = editDay.toEpochDay() * 86400000, rangeEnd = null),
+            supply = null,
+            groupMembers = listOf(slot)
+        )
+
+        val plan = result as MedUpdatePlanner.Plan.Rebuild
+        val before = plan.entries.first { it.endDate != null && it.endDate.isBefore(editDay) }
+        val window = plan.entries.first { it.creationDate == editDay }
+        val after = plan.entries.first { it.creationDate.isAfter(editDay) }
+        assertEquals(setOf(earlySkip), before.skipHistory.keys)
+        assertTrue(window.skipHistory.isEmpty())
+        assertEquals(setOf(lateSkip), after.skipHistory.keys)
+        // A skip alone is enough to keep a fragment alive (no phantom drop).
+        assertTrue(before.skipHistory.isNotEmpty())
+    }
+
+    @Test
+    fun `changed time carries its slot's skip records`() {
+        val skipDay = today.withDayOfMonth(8)
+        val record = SkipRecord(SkipReason.VITALS_OUT_OF_RANGE, LocalTime.of(7, 45), "BP 190/110")
+        val slot = med(1).copy(skipHistory = HashMap(mapOf(skipDay to record)))
+
+        val result = MedUpdatePlanner.plan(
+            noopRequest.copy(times = listOf(LocalTime.of(13, 0))),
+            supply = null,
+            groupMembers = listOf(slot)
+        )
+
+        val plan = result as MedUpdatePlanner.Plan.Rebuild
+        assertEquals(1, plan.entries.size)
+        assertEquals(LocalTime.of(13, 0), plan.entries[0].creationTime)
+        assertEquals(mapOf(skipDay to record), plan.entries[0].skipHistory)
+    }
+
+    @Test
+    fun `mixed taken and skipped day counts as compliant with a skip mark`() {
+        val skipped = med(1).copy(skipHistory = HashMap(mapOf(today to SkipRecord(SkipReason.OTHER))))
+        val taken = med(2, history = mapOf(today to LocalTime.NOON))
+
+        val status = getStatusForDate(today, listOf(skipped, taken))
+
+        assertEquals(DayStatus.SKIPPED, status)
+    }
+
+    @Test
+    fun `fully skipped day gets its own status`() {
+        val a = med(1).copy(skipHistory = HashMap(mapOf(today to SkipRecord(SkipReason.OTHER))))
+        val b = med(2, title = "Other").copy(skipHistory = HashMap(mapOf(today to SkipRecord(SkipReason.ACUTE_ILLNESS))))
+
+        assertEquals(DayStatus.SKIPPED, getStatusForDate(today, listOf(a, b)))
+    }
+
+    @Test
+    fun `skip report lists every skip with readable reasons`() {
+        val day1 = today.withDayOfMonth(3)
+        val day2 = today.withDayOfMonth(7)
+        val a = med(1).copy(
+            skipHistory = HashMap(
+                mapOf(
+                    day2 to SkipRecord(SkipReason.PROCEDURE_FASTING, LocalTime.NOON, "colonoscopy prep"),
+                    day1 to SkipRecord(SkipReason.ACUTE_ILLNESS, LocalTime.of(8, 0), null)
+                )
+            )
+        )
+        val b = med(2, title = "Metformin, 500mg").copy(
+            skipHistory = HashMap(mapOf(day1 to SkipRecord(SkipReason.OTHER, LocalTime.of(9, 30), "travel, forgot")))
+        )
+
+        val csv = SkipReport.toCsv(listOf(a, b))
+        val lines = csv.trim().split("\r\n")
+
+        assertEquals("medication,date,time,reason,note", lines[0])
+        // Sorted by date, then med title (Metformin < Sertraline).
+        assertTrue(lines[1].startsWith("\"Metformin, 500mg\",$day1,09:30,Patient discretion / other,\"travel, forgot\""))
+        assertTrue(lines[2].startsWith("Sertraline,$day1,08:00,Acute illness / vomiting"))
+        assertTrue(lines[3].startsWith("Sertraline,$day2,12:00,Upcoming procedure / fasting,colonoscopy prep"))
+        assertEquals(4, lines.size)
+    }
+
+    // ------------------------------------------------------ stock idempotency
+
+    @Test
+    fun `taking an already-taken dose does not decrement stock twice`() {
+        val withStock = med(1, supplyLeft = 5)
+
+        val first = InventoryService.applyTakeIfNew(null, withStock, today, isTaken = true)
+        val second = InventoryService.applyTakeIfNew(null, first, today, isTaken = true)
+
+        assertEquals(4, second.supplyDosesLeft)
+        assertEquals(1, second.takenHistory.size)
+    }
+
+    @Test
+    fun `un-take refunds stock exactly once`() {
+        val taken = med(1, supplyLeft = 4).copy(
+            takenHistory = HashMap(mapOf(today to LocalTime.NOON))
+        )
+
+        val undone = InventoryService.applyTakeIfNew(null, taken, today, isTaken = false)
+        val undoneAgain = InventoryService.applyTakeIfNew(null, undone, today, isTaken = false)
+
+        assertEquals(5, undoneAgain.supplyDosesLeft)
+        assertTrue(undoneAgain.takenHistory.isEmpty())
+    }
+
+    @Test
+    fun `stock tracking off leaves history behavior intact`() {
+        val noSupply = med(1, supplyLeft = null)
+
+        val taken = InventoryService.applyTakeIfNew(null, noSupply, today, isTaken = true)
+
+        assertTrue(taken.takenHistory.containsKey(today))
+        assertNull(taken.supplyDosesLeft)
+    }
+
+    @Test
+    fun `ledger records takes and refunds with balances, bounded`() {
+        var item = med(1, supplyLeft = 3)
+
+        // One dose per date (the design); five consecutive days.
+        List(5) { today.minusDays((4 - it).toLong()) }.forEach { d ->
+            item = InventoryService.applyTakeIfNew(null, item, d, isTaken = true)
+        }
+
+        val takenEntries = item.supplyLedger.filter { it.kind == SupplyChangeKind.TAKEN }
+        assertEquals(5, takenEntries.size)
+        // Balances clamp at zero and stay traceable.
+        assertEquals(listOf(2, 1, 0, 0, 0), takenEntries.map { it.balanceAfter })
+
+        val refunded = InventoryService.applyTakeIfNew(null, item, today, isTaken = false)
+        val refundEntry = refunded.supplyLedger.last()
+        assertEquals(SupplyChangeKind.REFUND, refundEntry.kind)
+        assertEquals(+1, refundEntry.delta)
+        assertEquals(1, refundEntry.balanceAfter)
+    }
+
+    @Test
+    fun `duplicate take appends no ledger entry`() {
+        val withStock = med(1, supplyLeft = 5)
+
+        val first = InventoryService.applyTakeIfNew(null, withStock, today, isTaken = true)
+        val second = InventoryService.applyTakeIfNew(null, first, today, isTaken = true)
+
+        assertEquals(first.supplyLedger.size, second.supplyLedger.size)
     }
 }

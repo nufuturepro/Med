@@ -224,16 +224,19 @@ class AppWearListenerService : WearableListenerService() {
                                         ignoreCase = true
                                     ) || itemName.contains(itemTitle, ignoreCase = true)
                                 ) {
-                                    val history = HashMap(item.takenHistory)
-                                    if (isTaken) {
-                                        history[today] = LocalTime.now()
-                                    } else {
-                                        history.remove(today)
+                                    // Idempotent: re-confirming a dose already
+                                    // logged must not decrement stock again.
+                                    val newItem = InventoryService.applyTakeIfNew(
+                                        applicationContext,
+                                        item,
+                                        today,
+                                        isTaken
+                                    )
+                                    if (newItem !== item) {
+                                        items[i] = newItem
+                                        NotificationReceiver.scheduleNotification(applicationContext, items[i])
+                                        updated = true
                                     }
-                                    items[i] = item.copy(takenHistory = history)
-                                    items[i] = applyInventoryChange(applicationContext, items[i], isTaken)
-                                    NotificationReceiver.scheduleNotification(applicationContext, items[i])
-                                    updated = true
                                 }
                             }
 
