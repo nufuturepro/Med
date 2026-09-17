@@ -276,7 +276,9 @@ fun MedicineBottomSheet(
                 if (count > newTimes.size) {
                     repeat(count - newTimes.size) { newTimes.add(LocalTime.now()) }
                 } else {
-                    while (newTimes.size > count) newTimes.removeLast()
+                    // MutableList.removeLast() only resolves on API 35+; on older
+                    // devices it throws NoSuchMethodError (upstream issue #19).
+                    while (newTimes.size > count) newTimes.removeAt(newTimes.lastIndex)
                 }
                 selectedTimes = newTimes
             }
