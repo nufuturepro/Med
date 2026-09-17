@@ -194,8 +194,6 @@
     <string name="notes_hint">Notities (Optioneel)</string>
     <string name="frequency_unit_biweek">Elke 2 weken</string>
     <string name="more_options">Meer</string>
-    <string name="community_title">Word lid van de community</string>
-    <string name="community_desc">Sluit je aan bij mijn Telegram-kanaal om het laatste nieuws en updates over mijn projecten niet te missen, samen met enkele exclusieve voorproefjes!</string>
     <string name="no_thanks">Nee, bedankt</string>
     <string name="sure_action">Zeker!</string>
     <string name="see_source_code">Zie broncode</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Testen</string>
     <string name="settings_test_alarm_title">Test alarm/melding</string>
     <string name="settings_test_alarm_desc">Activeert het alarm voor het dichtstbijzijnde medicijn</string>
-    <string name="settings_test_telegram_title">Toon telegram pop-up</string>
-    <string name="settings_test_telegram_desc">Geeft de community pop-up weer</string>
     <string name="settings_test_crash_title">Laat de app crashen</string>
     <string name="settings_test_crash_desc">Forceert een fatale uitzondering om crashrapportage te testen</string>
     <string name="settings_danger_zone_header">Gevarenzone</string>

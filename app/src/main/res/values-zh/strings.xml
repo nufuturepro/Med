@@ -194,8 +194,6 @@
     <string name="notes_hint">备注 (可选)</string>
     <string name="frequency_unit_biweek">每 2 周</string>
     <string name="more_options">更多</string>
-    <string name="community_title">加入社区</string>
-    <string name="community_desc">加入我的Telegram频道，不要错过关于我的项目的最新消息和更新，以及一些独家预览！</string>
     <string name="no_thanks">不了，谢谢</string>
     <string name="sure_action">当然！</string>
     <string name="see_source_code">查看源代码</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">测试</string>
     <string name="settings_test_alarm_title">测试闹钟/通知</string>
     <string name="settings_test_alarm_desc">触发最近药物的闹钟</string>
-    <string name="settings_test_telegram_title">显示telegram弹窗</string>
-    <string name="settings_test_telegram_desc">显示社区弹出窗口</string>
     <string name="settings_test_crash_title">使应用崩溃</string>
     <string name="settings_test_crash_desc">强制发生致命异常以测试崩溃报告</string>
     <string name="settings_danger_zone_header">危险区</string>

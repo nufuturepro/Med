@@ -194,8 +194,6 @@
     <string name="notes_hint">หมายเหตุ (ไม่บังคับ)</string>
     <string name="frequency_unit_biweek">ทุก 2 สัปดาห์</string>
     <string name="more_options">เพิ่มเติม</string>
-    <string name="community_title">เข้าร่วมชุมชน</string>
-    <string name="community_desc">เข้าร่วมช่อง Telegram ของฉันเพื่อไม่พลาดข่าวสารและอัปเดตล่าสุดเกี่ยวกับโปรเจกต์ของฉัน พร้อมกับตัวอย่างสุดพิเศษ!</string>
     <string name="no_thanks">ไม่ ขอบคุณ</string>
     <string name="sure_action">แน่นอน!</string>
     <string name="see_source_code">ดูซอร์สโค้ด</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">การทดสอบ</string>
     <string name="settings_test_alarm_title">ทดสอบการปลุก/การแจ้งเตือน</string>
     <string name="settings_test_alarm_desc">เรียกนาฬิกาปลุกสำหรับยาที่ใกล้ที่สุด</string>
-    <string name="settings_test_telegram_title">แสดงป๊อปอัป telegram</string>
-    <string name="settings_test_telegram_desc">แสดงป๊อปอัปชุมชน</string>
     <string name="settings_test_crash_title">ทำให้แอปขัดข้อง</string>
     <string name="settings_test_crash_desc">บังคับให้เกิดข้อยกเว้นร้ายแรงเพื่อทดสอบการรายงานข้อขัดข้อง</string>
     <string name="settings_danger_zone_header">เขตอันตราย</string>

@@ -194,8 +194,6 @@
     <string name="notes_hint">Σημειώσεις (Προαιρετικό)</string>
     <string name="frequency_unit_biweek">Κάθε 2 εβδομάδες</string>
     <string name="more_options">Περισσότερα</string>
-    <string name="community_title">Γίνετε μέλος της κοινότητας</string>
-    <string name="community_desc">Γίνετε μέλος του καναλιού μου στο Telegram για να μην χάσετε τα τελευταία νέα και ενημερώσεις για τα έργα μου, μαζί με μερικές αποκλειστικές κλεφτές ματιές!</string>
     <string name="no_thanks">Όχι, ευχαριστώ</string>
     <string name="sure_action">Σίγουρα!</string>
     <string name="see_source_code">Προβολή πηγαίου κώδικκα</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Δοκιμή</string>
     <string name="settings_test_alarm_title">Δοκιμή ειδοποιητηρίου/ειδοποίησης</string>
     <string name="settings_test_alarm_desc">Ενεργοποιεί το ειδοποιητήριο για το πλησιέστερο φάρμακο</string>
-    <string name="settings_test_telegram_title">Εμφάνιση αναδυόμενου παραθύρου telegram</string>
-    <string name="settings_test_telegram_desc">Εμφανίζει το αναδυόμενο παράθυρο της κοινότητας</string>
     <string name="settings_test_crash_title">Κατάρρευση της εφαρμογής</string>
     <string name="settings_test_crash_desc">Προκαλεί μια μοιραία εξαίρεση για τη δοκιμή της αναφοράς σφαλμάτων</string>
     <string name="settings_danger_zone_header">Επικίνδυνη ζώνη</string>

@@ -194,8 +194,6 @@
     <string name="notes_hint">Notlar (İsteğe bağlı)</string>
     <string name="frequency_unit_biweek">Her 2 Haftada Bir</string>
     <string name="more_options">Daha Fazla</string>
-    <string name="community_title">Topluluğa katılın</string>
-    <string name="community_desc">Projelerimle ilgili en son haberleri, güncellemeleri ve bazı özel önizlemeleri kaçırmamak için Telegram kanalıma katılın!</string>
     <string name="no_thanks">Hayır, teşekkürler</string>
     <string name="sure_action">Tabii!</string>
     <string name="see_source_code">Kaynak kodunu gör</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Test</string>
     <string name="settings_test_alarm_title">Alarmı/bildirimi test et</string>
     <string name="settings_test_alarm_desc">En yakın ilaç için alarmı tetikler</string>
-    <string name="settings_test_telegram_title">Telegram popup\'ını göster</string>
-    <string name="settings_test_telegram_desc">Topluluk popup\'ını görüntüler</string>
     <string name="settings_test_crash_title">Uygulamayı çökert</string>
     <string name="settings_test_crash_desc">Çökme raporlamasını test etmek için ölümcül bir istisna zorlar</string>
     <string name="settings_danger_zone_header">Tehlike bölgesi</string>

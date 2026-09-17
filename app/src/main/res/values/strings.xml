@@ -204,8 +204,6 @@
     <string name="notes_hint">Notes (Optional)</string>
     <string name="frequency_unit_biweek">Every 2 Weeks</string>
     <string name="more_options">More</string>
-    <string name="community_title">Join the community</string>
-    <string name="community_desc">Join my Telegram channel to not miss the latest news and updates on my projects, along with some exclusive sneak peeks!</string>
     <string name="no_thanks">No, thanks</string>
     <string name="sure_action">Sure!</string>
     <string name="see_source_code">See source code</string>
@@ -215,8 +213,6 @@
     <string name="settings_testing_header">Testing</string>
     <string name="settings_test_alarm_title">Test alarm/notification</string>
     <string name="settings_test_alarm_desc">Triggers the alarm for the nearest medicine</string>
-    <string name="settings_test_telegram_title">Show telegram popup</string>
-    <string name="settings_test_telegram_desc">Displays the community popup</string>
     <string name="settings_test_crash_title">Crash the app</string>
     <string name="settings_test_crash_desc">Forces a fatal exception to test crash reporting</string>
     <string name="settings_danger_zone_header">Danger zone</string>

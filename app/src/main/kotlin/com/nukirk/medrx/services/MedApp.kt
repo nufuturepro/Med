@@ -102,7 +102,6 @@ import com.nukirk.medrx.R
 import com.nukirk.medrx.SettingsActivity
 import com.nukirk.medrx.SkipReasonSheet
 import com.nukirk.medrx.SwipeableSquishItem
-import com.nukirk.medrx.elements.MainActivity.CommunityBottomSheet
 import com.nukirk.medrx.elements.MainActivity.EventBottomSheet
 import com.nukirk.medrx.elements.MainActivity.IllnessesBottomSheet
 import com.nukirk.medrx.elements.MainActivity.MainFAB
@@ -130,9 +129,7 @@ fun MedApp(
     presets: List<String>,
     useBottomSheet: Boolean,
     isExpandedScreen: Boolean,
-    showCommunitySheet: Boolean,
-    userDob: String,
-    onCommunitySheetDismiss: () -> Unit
+    userDob: String
 ) {
     val context = LocalContext.current
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -1220,12 +1217,6 @@ fun MedApp(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = if (!isExpandedScreen) 180.dp else 120.dp)
-        )
-    }
-
-    if (showCommunitySheet) {
-        CommunityBottomSheet(
-            onDismiss = onCommunitySheetDismiss
         )
     }
 

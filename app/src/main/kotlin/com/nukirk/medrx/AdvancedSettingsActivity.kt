@@ -79,7 +79,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nukirk.medrx.elements.AdvancedSettingsActivity.ResetPopup
 import com.nukirk.medrx.elements.AdvancedSettingsActivity.RestorePopup
-import com.nukirk.medrx.elements.MainActivity.CommunityBottomSheet
 import com.nukirk.medrx.services.CsvPortability
 import com.nukirk.medrx.services.SkipReport
 import com.nukirk.medrx.services.DataRepository
@@ -142,7 +141,6 @@ fun AdvancedSettingsScreen(onBack: () -> Unit) {
     var autoUpdates by remember { mutableStateOf(prefs.getBoolean(PREF_AUTO_UPDATES, true)) }
 
     var showRestartDialog by remember { mutableStateOf(false) }
-    var showCommunitySheet by remember { mutableStateOf(false) }
     var showResetPopup by remember { mutableStateOf(false) }
 
     fun loadArchivedMeds(): List<MedData> = DataRepository.loadData(context).filter {
@@ -402,7 +400,7 @@ fun AdvancedSettingsScreen(onBack: () -> Unit) {
                             containerColor = Color(0xFFa0d57b),
                             iconColor = Color(0xFF1c4a00),
                             index = 0,
-                            count = 3,
+                            count = 2,
                             onClick = {
                                 val now = LocalTime.now()
                                 val items = DataRepository.loadData(context)
@@ -423,26 +421,13 @@ fun AdvancedSettingsScreen(onBack: () -> Unit) {
                         )
 
                         AdvancedSegmentedItem(
-                            icon = Icons.Rounded.Group,
-                            title = stringResource(R.string.settings_test_telegram_title),
-                            subtitle = stringResource(R.string.settings_test_telegram_desc),
-                            containerColor = Color(0xFF97cbff),
-                            iconColor = Color(0xFF003355),
-                            index = 1,
-                            count = 3,
-                            onClick = {
-                                showCommunitySheet = true
-                            }
-                        )
-
-                        AdvancedSegmentedItem(
                             icon = Icons.Rounded.BugReport,
                             title = stringResource(R.string.settings_test_crash_title),
                             subtitle = stringResource(R.string.settings_test_crash_desc),
                             containerColor = Color(0xFFffb869),
                             iconColor = Color(0xFF5c3000),
-                            index = 2,
-                            count = 3,
+                            index = 1,
+                            count = 2,
                             onClick = {
                                 throw RuntimeException("Test Crash Triggered")
                             }
@@ -536,12 +521,6 @@ fun AdvancedSettingsScreen(onBack: () -> Unit) {
                 item { Spacer(modifier = Modifier.height(48.dp)) }
             }
         }
-    }
-
-    if (showCommunitySheet) {
-        CommunityBottomSheet(
-            onDismiss = { showCommunitySheet = false }
-        )
     }
 
     if (showResetPopup) {

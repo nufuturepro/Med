@@ -194,8 +194,6 @@
     <string name="notes_hint">Anteckningar (Valfritt)</string>
     <string name="frequency_unit_biweek">Varannan vecka</string>
     <string name="more_options">Mer</string>
-    <string name="community_title">Gå med i gemenskapen</string>
-    <string name="community_desc">Gå med i min Telegram-kanal för att inte missa de senaste nyheterna och uppdateringarna om mina projekt, tillsammans med exklusiva smygtittar!</string>
     <string name="no_thanks">Nej tack</string>
     <string name="sure_action">Visst!</string>
     <string name="see_source_code">Visa källkod</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Testning</string>
     <string name="settings_test_alarm_title">Testa larm/meddelande</string>
     <string name="settings_test_alarm_desc">Utlöser larmet för närmaste medicin</string>
-    <string name="settings_test_telegram_title">Visa telegram-popup</string>
-    <string name="settings_test_telegram_desc">Visar gemenskapspopupen</string>
     <string name="settings_test_crash_title">Krascha appen</string>
     <string name="settings_test_crash_desc">Framtvingar ett fatalt undantag för att testa kraschrapportering</string>
     <string name="settings_danger_zone_header">Fara zon</string>

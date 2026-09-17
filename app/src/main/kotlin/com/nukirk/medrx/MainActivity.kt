@@ -276,15 +276,6 @@ class MainActivity : ComponentActivity() {
                 if (update != null) Updater.showUpdateNotification(context, update)
             }
 
-            var showCommunitySheet by remember { mutableStateOf(false) }
-
-            LaunchedEffect(currentVersionName) {
-                val lastVersion = prefs.getString("last_version", null)
-                if (lastVersion != currentVersionName) {
-                    showCommunitySheet = true
-                }
-            }
-
             DisposableEffect(prefs) {
                 val listener =
                     SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
@@ -321,14 +312,7 @@ class MainActivity : ComponentActivity() {
                     presets = currentPresets,
                     useBottomSheet = useBottomSheet,
                     isExpandedScreen = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded,
-                    showCommunitySheet = showCommunitySheet,
-                    userDob = currentDob,
-                    onCommunitySheetDismiss = {
-                        showCommunitySheet = false
-                        prefs.edit()
-                            .putString("last_version", currentVersionName)
-                            .apply()
-                    }
+                    userDob = currentDob
                 )
             }
         }

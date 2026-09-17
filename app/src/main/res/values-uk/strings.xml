@@ -194,8 +194,6 @@
     <string name="notes_hint">Нотатки (Необов\'язково)</string>
     <string name="frequency_unit_biweek">Кожні 2 тижні</string>
     <string name="more_options">Ще</string>
-    <string name="community_title">Приєднуйтесь до спільноти</string>
-    <string name="community_desc">Приєднуйтесь до мого Telegram каналу, щоб не пропустити останні новини та оновлення про мої проекти, а також ексклюзивні анонси!</string>
     <string name="no_thanks">Ні, дякую</string>
     <string name="sure_action">Звичайно!</string>
     <string name="see_source_code">Дивитися вихідний код</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Тестування</string>
     <string name="settings_test_alarm_title">Тест будильника/сповіщення</string>
     <string name="settings_test_alarm_desc">Спрацьовує будильник для найближчих ліків</string>
-    <string name="settings_test_telegram_title">Показати спливаюче вікно telegram</string>
-    <string name="settings_test_telegram_desc">Відображає спливаюче вікно спільноти</string>
     <string name="settings_test_crash_title">Викликати збій програми</string>
     <string name="settings_test_crash_desc">Викликає фатальну помилку для перевірки звітів про збої</string>
     <string name="settings_danger_zone_header">Небезпечна зона</string>

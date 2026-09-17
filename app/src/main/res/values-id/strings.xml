@@ -194,8 +194,6 @@
     <string name="notes_hint">Catatan (Opsional)</string>
     <string name="frequency_unit_biweek">Setiap 2 Minggu</string>
     <string name="more_options">Lainnya</string>
-    <string name="community_title">Bergabung dengan komunitas</string>
-    <string name="community_desc">Bergabunglah dengan saluran Telegram saya agar tidak ketinggalan berita dan pembaruan terbaru tentang proyek saya, bersama dengan beberapa cuplikan eksklusif!</string>
     <string name="no_thanks">Tidak, terima kasih</string>
     <string name="sure_action">Tentu!</string>
     <string name="see_source_code">Lihat kode sumber</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Pengujian</string>
     <string name="settings_test_alarm_title">Uji alarm/notifikasi</string>
     <string name="settings_test_alarm_desc">Memicu alarm untuk obat terdekat</string>
-    <string name="settings_test_telegram_title">Tampilkan popup telegram</string>
-    <string name="settings_test_telegram_desc">Menampilkan popup komunitas</string>
     <string name="settings_test_crash_title">Buat aplikasi mogok</string>
     <string name="settings_test_crash_desc">Memaksa pengecualian fatal untuk menguji pelaporan kerusakan</string>
     <string name="settings_danger_zone_header">Zona bahaya</string>

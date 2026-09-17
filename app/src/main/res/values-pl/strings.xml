@@ -194,8 +194,6 @@
     <string name="notes_hint">Notatki (Opcjonalne)</string>
     <string name="frequency_unit_biweek">Co 2 tygodnie</string>
     <string name="more_options">Więcej</string>
-    <string name="community_title">Dołącz do społeczności</string>
-    <string name="community_desc">Dołącz do mojego kanału na Telegramie, aby nie przegapić najnowszych wiadomości i aktualizacji moich projektów, wraz z ekskluzywnymi zapowiedziami!</string>
     <string name="no_thanks">Nie, dziękuję</string>
     <string name="sure_action">Jasne!</string>
     <string name="see_source_code">Zobacz kod źródłowy</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Testowanie</string>
     <string name="settings_test_alarm_title">Testuj alarm/powiadomienie</string>
     <string name="settings_test_alarm_desc">Wyzwala alarm dla najbliższego leku</string>
-    <string name="settings_test_telegram_title">Pokaż wyskakujące okienko telegram</string>
-    <string name="settings_test_telegram_desc">Wyświetla wyskakujące okienko społeczności</string>
     <string name="settings_test_crash_title">Wywołaj awarię aplikacji</string>
     <string name="settings_test_crash_desc">Wymusza wyjątek krytyczny w celu przetestowania raportowania awarii</string>
     <string name="settings_danger_zone_header">Strefa zagrożenia</string>

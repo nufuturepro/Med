@@ -194,8 +194,6 @@
     <string name="notes_hint">Notizen (Optional)</string>
     <string name="frequency_unit_biweek">Alle 2 Wochen</string>
     <string name="more_options">Mehr</string>
-    <string name="community_title">Werde Teil der Community</string>
-    <string name="community_desc">Tritt meinem Telegram-Kanal bei, um die neuesten Nachrichten und Updates zu meinen Projekten sowie exklusive Einblicke nicht zu verpassen!</string>
     <string name="no_thanks">Nein, danke</string>
     <string name="sure_action">Klar!</string>
     <string name="see_source_code">Quellcode ansehen</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Testen</string>
     <string name="settings_test_alarm_title">Test-Alarm/Benachrichtigung</string>
     <string name="settings_test_alarm_desc">Löst den Alarm für das nächste Medikament aus</string>
-    <string name="settings_test_telegram_title">Telegram-Popup anzeigen</string>
-    <string name="settings_test_telegram_desc">Zeigt das Community-Popup an</string>
     <string name="settings_test_crash_title">App abstürzen lassen</string>
     <string name="settings_test_crash_desc">Erzwingt eine schwerwiegende Ausnahme, um die Absturzberichterstattung zu testen</string>
     <string name="settings_danger_zone_header">Gefahrenzone</string>

@@ -194,8 +194,6 @@
     <string name="notes_hint">Jegyzetek (Opcionális)</string>
     <string name="frequency_unit_biweek">Kéthetente</string>
     <string name="more_options">Több</string>
-    <string name="community_title">Csatlakozzon a közösséghez</string>
-    <string name="community_desc">Csatlakozzon Telegram csatornámhoz, hogy ne maradjon le a legújabb hírekről és frissítésekről a projektjeimmel kapcsolatban, valamint néhány exkluzív betekintésről!</string>
     <string name="no_thanks">Nem, köszönöm</string>
     <string name="sure_action">Persze!</string>
     <string name="see_source_code">Forráskód megtekintése</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Tesztelés</string>
     <string name="settings_test_alarm_title">Teszt riasztás/értesítés</string>
     <string name="settings_test_alarm_desc">Riasztást indít a legközelebbi gyógyszerhez</string>
-    <string name="settings_test_telegram_title">Telegram felugró ablak megjelenítése</string>
-    <string name="settings_test_telegram_desc">Megjeleníti a közösségi felugró ablakot</string>
     <string name="settings_test_crash_title">Alkalmazás összeomlasztása</string>
     <string name="settings_test_crash_desc">Végzetes kivételt kényszerít a hibajelentés teszteléséhez</string>
     <string name="settings_danger_zone_header">Veszélyzóna</string>

@@ -194,8 +194,6 @@
     <string name="notes_hint">Ghi chú (Không bắt buộc)</string>
     <string name="frequency_unit_biweek">Mỗi 2 tuần</string>
     <string name="more_options">Thêm</string>
-    <string name="community_title">Tham gia cộng đồng</string>
-    <string name="community_desc">Tham gia kênh Telegram của tôi để không bỏ lỡ tin tức và bản cập nhật mới nhất về các dự án của tôi, cùng với một số tin xem trước độc quyền!</string>
     <string name="no_thanks">Không, cảm ơn</string>
     <string name="sure_action">Chắc chắn rồi!</string>
     <string name="see_source_code">Xem mã nguồn</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Thử nghiệm</string>
     <string name="settings_test_alarm_title">Thử nghiệm báo thức/thông báo</string>
     <string name="settings_test_alarm_desc">Kích hoạt báo thức cho thuốc gần nhất</string>
-    <string name="settings_test_telegram_title">Hiển thị popup telegram</string>
-    <string name="settings_test_telegram_desc">Hiển thị popup cộng đồng</string>
     <string name="settings_test_crash_title">Gây sự cố ứng dụng</string>
     <string name="settings_test_crash_desc">Buộc xảy ra ngoại lệ nghiêm trọng để thử nghiệm tính năng báo cáo sự cố</string>
     <string name="settings_danger_zone_header">Khu vực nguy hiểm</string>

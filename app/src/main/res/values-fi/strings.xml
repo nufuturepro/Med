@@ -194,8 +194,6 @@
     <string name="notes_hint">Muistiinpanot (Valinnainen)</string>
     <string name="frequency_unit_biweek">Joka 2. viikko</string>
     <string name="more_options">Lisää</string>
-    <string name="community_title">Liity yhteisöön</string>
-    <string name="community_desc">Liity Telegram-kanavalleni, jotta et jää paitsi uusimmista uutisista ja päivityksistä projekteistani, sekä yksinoikeudella julkaistavista kurkistuksista!</string>
     <string name="no_thanks">Ei kiitos</string>
     <string name="sure_action">Totta kai!</string>
     <string name="see_source_code">Katso lähdekoodi</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Testaus</string>
     <string name="settings_test_alarm_title">Testihälytys/ilmoitus</string>
     <string name="settings_test_alarm_desc">Laukaisee hälytyksen lähimmälle lääkkeelle</string>
-    <string name="settings_test_telegram_title">Näytä telegram-ponnahdusikkuna</string>
-    <string name="settings_test_telegram_desc">Näyttää yhteisön ponnahdusikkunan</string>
     <string name="settings_test_crash_title">Kaada sovellus</string>
     <string name="settings_test_crash_desc">Pakottaa vakavan poikkeuksen kaatumisraportoinnin testaamiseksi</string>
     <string name="settings_danger_zone_header">Vaaravyöhyke</string>

@@ -194,8 +194,6 @@
     <string name="notes_hint">नोट्स (वैकल्पिक)</string>
     <string name="frequency_unit_biweek">हर 2 सप्ताह में</string>
     <string name="more_options">अधिक</string>
-    <string name="community_title">समुदाय में शामिल हों</string>
-    <string name="community_desc">मेरे प्रोजेक्ट्स के बारे में ताज़ा ख़बरें और अपडेट न चूकने के लिए मेरे टेलीग्राम चैनल से जुड़ें, साथ ही कुछ विशेष झलकियों के लिए भी!</string>
     <string name="no_thanks">नहीं, धन्यवाद</string>
     <string name="sure_action">ज़रूर!</string>
     <string name="see_source_code">स्रोत कोड देखें</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">परीक्षण</string>
     <string name="settings_test_alarm_title">परीक्षण अलार्म/सूचना</string>
     <string name="settings_test_alarm_desc">निकटतम दवा के लिए अलार्म ट्रिगर करता है</string>
-    <string name="settings_test_telegram_title">टेलीग्राम पॉपअप दिखाएं</string>
-    <string name="settings_test_telegram_desc">समुदाय पॉपअप प्रदर्शित करता है</string>
     <string name="settings_test_crash_title">ऐप को क्रैश करें</string>
     <string name="settings_test_crash_desc">क्रैश रिपोर्टिंग का परीक्षण करने के लिए एक घातक अपवाद को बाध्य करता है</string>
     <string name="settings_danger_zone_header">खतरे का क्षेत्र</string>

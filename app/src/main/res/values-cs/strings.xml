@@ -194,8 +194,6 @@
     <string name="notes_hint">Poznámky (Volitelné)</string>
     <string name="frequency_unit_biweek">Každé 2 týdny</string>
     <string name="more_options">Více</string>
-    <string name="community_title">Připojte se ke komunitě</string>
-    <string name="community_desc">Připojte se k mému kanálu na Telegramu, aby vám neunikly nejnovější zprávy a aktualizace o mých projektech, spolu s exkluzivními ukázkami!</string>
     <string name="no_thanks">Ne, děkuji</string>
     <string name="sure_action">Jasně!</string>
     <string name="see_source_code">Zobrazit zdrojový kód</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Testování</string>
     <string name="settings_test_alarm_title">Testovací budík/oznámení</string>
     <string name="settings_test_alarm_desc">Spustí budík pro nejbližší lék</string>
-    <string name="settings_test_telegram_title">Zobrazit vyskakovací okno Telegram</string>
-    <string name="settings_test_telegram_desc">Zobrazí komunitní vyskakovací okno</string>
     <string name="settings_test_crash_title">Způsobit pád aplikace</string>
     <string name="settings_test_crash_desc">Vynutí fatální výjimku pro testování hlášení o pádech</string>
     <string name="settings_danger_zone_header">Nebezpečná zóna</string>

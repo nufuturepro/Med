@@ -194,8 +194,6 @@
     <string name="notes_hint">メモ（任意）</string>
     <string name="frequency_unit_biweek">2週間ごと</string>
     <string name="more_options">詳細</string>
-    <string name="community_title">コミュニティに参加する</string>
-    <string name="community_desc">Telegramチャンネルに参加して、プロジェクトの最新ニュースやアップデート、さらに限定プレビューを見逃さないようにしましょう！</string>
     <string name="no_thanks">いいえ、結構です</string>
     <string name="sure_action">参加する！</string>
     <string name="see_source_code">ソースコードを表示</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">テスト</string>
     <string name="settings_test_alarm_title">アラーム/通知のテスト</string>
     <string name="settings_test_alarm_desc">最も近い薬のアラームをトリガーします</string>
-    <string name="settings_test_telegram_title">Telegramポップアップを表示</string>
-    <string name="settings_test_telegram_desc">コミュニティポップアップを表示します</string>
     <string name="settings_test_crash_title">アプリをクラッシュさせる</string>
     <string name="settings_test_crash_desc">クラッシュレポートをテストするために致命的な例外を強制的に発生させます</string>
     <string name="settings_danger_zone_header">危険ゾーン</string>

@@ -194,8 +194,6 @@
     <string name="notes_hint">Noter (Valgfrit)</string>
     <string name="frequency_unit_biweek">Hver 2. uge</string>
     <string name="more_options">Mere</string>
-    <string name="community_title">Tilmeld dig fællesskabet</string>
-    <string name="community_desc">Tilmeld dig min Telegram-kanal for ikke at gå glip af de seneste nyheder og opdateringer om mine projekter, sammen med nogle eksklusive smugkig!</string>
     <string name="no_thanks">Nej tak</string>
     <string name="sure_action">Selvfølgelig!</string>
     <string name="see_source_code">Se kildekode</string>
@@ -205,8 +203,6 @@
     <string name="settings_testing_header">Test</string>
     <string name="settings_test_alarm_title">Test alarm/notifikation</string>
     <string name="settings_test_alarm_desc">Udløser alarmen for den nærmeste medicin</string>
-    <string name="settings_test_telegram_title">Vis telegram pop-up</string>
-    <string name="settings_test_telegram_desc">Viser fællesskabs pop-up\'en</string>
     <string name="settings_test_crash_title">Fremtving nedbrud</string>
     <string name="settings_test_crash_desc">Fremtvinger en fatal undtagelse for at teste fejlrapportering</string>
     <string name="settings_danger_zone_header">Farezone</string>
