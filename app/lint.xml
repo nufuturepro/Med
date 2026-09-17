@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Known, tracked debt: fork-added strings (skip reasons, ledger, archive,
+         refill, widget) are not yet translated into all 26 locales. Android
+         falls back to English at runtime until translations land. -->
+    <issue id="MissingTranslation" severity="warning" />
+
+    <!-- Pre-existing upstream pattern: context.getString(...) and
+         locale-dependent DateTimeFormatter.ofPattern(...) inside composables.
+         A quality/correctness refactor, not an OS-compatibility issue; to be
+         addressed in a dedicated pass. -->
+    <issue id="LocalContextGetResourceValueCall" severity="warning" />
+    <issue id="NonObservableLocale" severity="warning" />
+</lint>

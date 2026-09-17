@@ -4,24 +4,41 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Release signing: prefers a local keystore.properties (storeFile, storePassword,
+// keyAlias, keyPassword), falling back to environment variables (KEY_STORE_FILE,
+// KEY_STORE_PASSWORD, ALIAS, KEY_PASSWORD) for CI. Never commit real credentials.
+val keystoreFile = rootProject.file("keystore.properties")
+val keystoreProps: Map<String, String> = if (keystoreFile.exists()) {
+    keystoreFile.readLines()
+        .filter { '=' in it && !it.trimStart().startsWith("#") }
+        .associate { line ->
+            val parts = line.split('=', limit = 2)
+            parts[0].trim() to parts[1].trim()
+        }
+} else emptyMap()
+fun signEnv(name: String): String? = keystoreProps[name] ?: System.getenv(name)
+
 android {
-    namespace = "com.fedeveloper95.med"
+    namespace = "com.nukirk.medrx"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.fedeveloper95.med"
+        applicationId = "com.nukirk.medrx"
         minSdk = 26
         targetSdk = 37
-        versionCode = 20
-        versionName = "2.0"
+        versionCode = 21
+        versionName = "2.1.0-fork.1"
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("release_key.jks")
-            storePassword = System.getenv("KEY_STORE_PASSWORD")
-            keyAlias = System.getenv("ALIAS")
-            keyPassword = System.getenv("KEY_STORE_PASSWORD")
+            val storePath = signEnv("KEY_STORE_FILE")
+            if (storePath != null) {
+                storeFile = rootProject.file(storePath)
+                storePassword = signEnv("KEY_STORE_PASSWORD")
+                keyAlias = signEnv("ALIAS")
+                keyPassword = signEnv("KEY_PASSWORD") ?: signEnv("KEY_STORE_PASSWORD")
+            }
         }
     }
     buildTypes {

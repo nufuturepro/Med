@@ -44,7 +44,7 @@
     <string name="settings_version_title">Sovelluksen versio</string>
     <string name="unknown">Tuntematon</string>
     <string name="settings_developer_title">Kehittäjä</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">Ilmoita virheestä / ominaisuudesta</string>
     <string name="settings_report_desc">Ota yhteyttä Telegramissa</string>
 

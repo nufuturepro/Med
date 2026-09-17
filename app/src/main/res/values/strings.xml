@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Med</string>
+    <string name="app_name">Med RX</string>
     <string name="medicine_label">Medicine</string>
     <string name="event_label">Event</string>
     <string name="menu_tooltip">Menu</string>
@@ -44,14 +44,17 @@
     <string name="settings_version_title">App Version</string>
     <string name="unknown">Unknown</string>
     <string name="settings_developer_title">Developer</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">Report Bug / Feature</string>
-    <string name="settings_report_desc">Contact on Telegram</string>
+    <string name="settings_report_desc">Open an issue on GitHub</string>
+
+    <string name="fork_acknowledgment">Med RX is a community fork of Med by FeDeveloper95 (Apache 2.0), maintained by nukirk with extra features: dose skipping with reasons, supply ledger, pre-skips, and doctor reports. This app is not affiliated with or endorsed by the original author.</string>
 
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_desc">Find the latest version</string>
     <string name="update_action">Update</string>
     <string name="update_available">Update available!</string>
+    <string name="update_available_version">Update to %1$s available!</string>
     <string name="update_latest_version_msg">No updates available at the moment.</string>
     <string name="update_error_msg">Could not check for updates. Check your connection.</string>
     <string name="later">Later</string>
@@ -378,5 +381,4 @@
     <string name="ledger_kind_initial">Tracking started</string>
     <string name="card_refill_desc">Add a refill to supply</string>
     <string name="tap_again_to_refill">Add %1$d to supply? Tap again to confirm</string>
-
 </resources>

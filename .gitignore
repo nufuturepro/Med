@@ -13,6 +13,9 @@ local.properties
 
 /captures/
 *.apk
+keystore.properties
+*.jks
+*.keystore
 *.ap_
 *.dex
 *.class

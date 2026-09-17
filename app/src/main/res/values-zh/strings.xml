@@ -44,7 +44,7 @@
     <string name="settings_version_title">应用版本</string>
     <string name="unknown">未知</string>
     <string name="settings_developer_title">开发者</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">报告错误 / 提出建议</string>
     <string name="settings_report_desc">在Telegram上联系</string>
 

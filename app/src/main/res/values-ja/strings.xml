@@ -44,7 +44,7 @@
     <string name="settings_version_title">アプリのバージョン</string>
     <string name="unknown">不明</string>
     <string name="settings_developer_title">開発者</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">バグ / 機能の報告</string>
     <string name="settings_report_desc">Telegramで連絡する</string>
 

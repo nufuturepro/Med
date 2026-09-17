@@ -44,7 +44,7 @@
     <string name="settings_version_title">Wersja aplikacji</string>
     <string name="unknown">Nieznana</string>
     <string name="settings_developer_title">Programista</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">Zgłoś błąd / funkcję</string>
     <string name="settings_report_desc">Kontakt na Telegramie</string>
 

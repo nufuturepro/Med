@@ -44,7 +44,7 @@
     <string name="settings_version_title">Alkalmazás verziója</string>
     <string name="unknown">Ismeretlen</string>
     <string name="settings_developer_title">Fejlesztő</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">Hiba / Funkció bejelentése</string>
     <string name="settings_report_desc">Kapcsolatfelvétel Telegramon</string>
 

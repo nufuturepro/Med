@@ -44,7 +44,7 @@
     <string name="settings_version_title">Versione app</string>
     <string name="unknown">Sconosciuta</string>
     <string name="settings_developer_title">Sviluppatore</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">Segnala bug / funzionalità</string>
     <string name="settings_report_desc">Contatta su Telegram</string>
 

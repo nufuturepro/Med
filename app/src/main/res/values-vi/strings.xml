@@ -44,7 +44,7 @@
     <string name="settings_version_title">Phiên bản ứng dụng</string>
     <string name="unknown">Không rõ</string>
     <string name="settings_developer_title">Nhà phát triển</string>
-    <string name="settings_developer_name">FeDeveloper95</string>
+    <string name="settings_developer_name">nukirk (fork of Med by FeDeveloper95)</string>
     <string name="settings_report_title">Báo cáo lỗi / Tính năng</string>
     <string name="settings_report_desc">Liên hệ qua Telegram</string>
 
