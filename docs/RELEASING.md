@@ -31,6 +31,30 @@ No GitHub CLI? Repo → Settings → Secrets and variables → Actions →
 > When uploading base64 by hand, make sure the editor doesn't wrap lines —
 > the CI decodes the secret exactly as stored.
 
+## Versioning a fork
+
+Med RX carries **two numbers with two jobs**:
+
+- **`versionCode`** — what Android and CI care about. A strictly increasing
+  integer that is **Med RX's own counter**: start wherever it must to be
+  above any build already shipped under this app id (currently `21`, one
+  above upstream's last `20`), increment by exactly 1 per release, never
+  reuse, never sync it back to upstream's counter.
+- **`versionName`** — what humans and the in-app updater compare. Format:
+  **`X.Y.Z-fork.N`**
+
+  - `X.Y.Z` = the upstream Med version whose code this fork is based on
+    (the fork point, bumped when you absorb real upstream changes).
+  - `fork.N` = Med RX's own release counter. Fork-only releases bump
+    `N`; absorbing upstream changes steps the base (`2.1`, `2.2`, …).
+
+  Example lineage: `2.1.0-fork.1` → `2.1.0-fork.2` → `2.2.0-fork.1`.
+
+This reads as "based on Med 2.x, fork release N," collides with nothing
+upstream uses, and the updater's segment-wise `isNewer()` comparison
+handles it correctly (`2.1.0-fork.1` > `2.0`; a release must always be
+strictly greater than the previous one).
+
 ## Cutting a release
 
 1. Bump `versionCode` (+1, never reuse) and `versionName` in **both**

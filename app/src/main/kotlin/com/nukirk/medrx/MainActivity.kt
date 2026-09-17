@@ -123,6 +123,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nukirk.medrx.elements.MainActivity.WhatsNewDialog
 import com.nukirk.medrx.elements.NotificationsSettingsActivity.FullscreenNotifsHandler
 import com.nukirk.medrx.services.AppLockManager
 import com.nukirk.medrx.services.HandoffHelper
@@ -276,6 +277,19 @@ class MainActivity : ComponentActivity() {
                 if (update != null) Updater.showUpdateNotification(context, update)
             }
 
+            var showWhatsNew by remember { mutableStateOf(false) }
+
+            LaunchedEffect(currentVersionName) {
+                val seenVersion = prefs.getString("last_whatsnew_shown", null)
+                if (seenVersion == null) {
+                    // Fresh install: seed the pref so new users aren't greeted
+                    // by a changelog before their first medicine.
+                    prefs.edit().putString("last_whatsnew_shown", currentVersionName).apply()
+                } else if (seenVersion != currentVersionName) {
+                    showWhatsNew = true
+                }
+            }
+
             DisposableEffect(prefs) {
                 val listener =
                     SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
@@ -305,6 +319,14 @@ class MainActivity : ComponentActivity() {
 
             MedTheme(themeOverride = currentTheme) {
                 FullscreenNotifsHandler()
+                if (showWhatsNew) {
+                    WhatsNewDialog(
+                        onDismiss = {
+                            showWhatsNew = false
+                            prefs.edit().putString("last_whatsnew_shown", currentVersionName).apply()
+                        }
+                    )
+                }
                 MedApp(
                     viewModel = viewModel,
                     weekStart = currentWeekStart,

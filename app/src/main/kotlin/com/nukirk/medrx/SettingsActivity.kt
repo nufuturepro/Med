@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Event
+import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.LightMode
@@ -569,7 +570,7 @@ fun SettingsScreen(
                             containerColor = Color(0xFFa1c9ff),
                             iconColor = Color(0xFF0641a0),
                             index = 0,
-                            count = 4,
+                            count = 5,
                             onClick = {
                                 try {
                                     val intent = Intent(
@@ -591,7 +592,7 @@ fun SettingsScreen(
                             containerColor = Color(0xFFc7c7c7),
                             iconColor = Color(0xFF474747),
                             index = 1,
-                            count = 4,
+                            count = 5,
                             onClick = {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
@@ -608,7 +609,7 @@ fun SettingsScreen(
                             containerColor = Color(0xFFffb3ae),
                             iconColor = Color(0xFF8a1a16),
                             index = 2,
-                            count = 4,
+                            count = 5,
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/nufuturepro/MedRX/issues"))
                                 context.startActivity(intent)
@@ -622,9 +623,26 @@ fun SettingsScreen(
                             containerColor = Color(0xFF67d4ff),
                             iconColor = Color(0xFF004e5d),
                             index = 3,
-                            count = 4,
+                            count = 5,
                             onClick = {
                                 context.startActivity(Intent(context, UpdaterActivity::class.java))
+                            }
+                        )
+
+                        SettingsSegmentedItem(
+                            icon = Icons.Rounded.Forum,
+                            title = stringResource(R.string.settings_community_title),
+                            subtitle = stringResource(R.string.settings_community_desc),
+                            containerColor = Color(0xFFd0bcff),
+                            iconColor = Color(0xFF3a2d63),
+                            index = 4,
+                            count = 5,
+                            onClick = {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://github.com/nufuturepro/MedRX/discussions")
+                                )
+                                context.startActivity(intent)
                             }
                         )
                     }
