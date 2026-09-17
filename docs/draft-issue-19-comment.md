@@ -45,6 +45,6 @@ saves normally.
 Happy to open a PR with this if that's easier to review.
 
 Side note: I'm maintaining a fork with this and a few other fixes
-(https://github.com/nufuturepro/Med) — no pressure to merge anything there,
+(https://github.com/nufuturepro/MedRX) — no pressure to merge anything there,
 this comment is just so the bug gets documented for upstream users either
 way.

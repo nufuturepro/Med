@@ -610,7 +610,7 @@ fun SettingsScreen(
                             index = 2,
                             count = 4,
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/nufuturepro/Med/issues"))
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/nufuturepro/MedRX/issues"))
                                 context.startActivity(intent)
                             }
                         )

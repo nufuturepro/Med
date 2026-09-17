@@ -384,7 +384,7 @@ fun UpdaterScreen(onBack: () -> Unit) {
                             onClick = {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    Uri.parse("https://github.com/nufuturepro/Med")
+                                    Uri.parse("https://github.com/nufuturepro/MedRX")
                                 )
                                 context.startActivity(intent)
                             },

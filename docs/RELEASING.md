@@ -3,7 +3,7 @@
 Releases are built by GitHub Actions whenever a tag `v*` is pushed. The
 workflow signs both APKs (phone + Wear) with the release keystore stored in
 repo secrets and publishes them to GitHub Releases — the exact feed the
-in-app updater polls (`nufuturepro/Med`).
+in-app updater polls (`nufuturepro/MedRX`).
 
 ## One-time setup: upload signing secrets
 

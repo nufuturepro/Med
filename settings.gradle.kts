@@ -21,6 +21,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Med"
+rootProject.name = "MedRX"
 include(":app")
 include(":wear")
