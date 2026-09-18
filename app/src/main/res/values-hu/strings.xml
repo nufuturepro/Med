@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rx</string>
+    <string name="app_name">Med Rx</string>
     <string name="medicine_label">Gyógyszer</string>
     <string name="event_label">Esemény</string>
     <string name="menu_tooltip">Menü</string>

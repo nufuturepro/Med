@@ -1,19 +1,15 @@
-# Rx roadmap
+# Med Rx roadmap
 
 Living document — update it when the plan changes, don't treat it as a promise
 calendar.
 
-## Identity: "Med RX" → "Rx" (Record eXchange) — SHIPPED in 2.2.0-fork.1
+## Identity: "Med RX" → "Med Rx" — SHIPPED in 2.2.0-fork.1
 
-The app is renamed to **Rx**, where **Rx stands for "Record eXchange"** — a
-personal logbook of *what goes into the body and when*: medicines, symptoms,
-events, and the context between them.
+The brand is now written **Med Rx** — same name, lowercase x. No rebrand
+narrative accompanies it; user-facing copy simply says "Med Rx".
 
-How it was done:
-
-- **Launcher name is "Rx"** on phone and Wear, in every language (the brand is
-  untranslated by design). The Med RX identity remains in the README, repo
-  name, and fork-credit line for discoverability and provenance.
+- **Launcher name is "Med Rx"** on phone and Wear, in every language (the
+  brand is untranslated by design).
 - **Package id stays `com.nukirk.medrx`**: changing the applicationId would
   orphan every existing install — updates would stop matching, and moving data
   would require uninstall + restore. The id is identity plumbing, not branding.

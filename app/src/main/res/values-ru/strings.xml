@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rx</string>
+    <string name="app_name">Med Rx</string>
     <string name="medicine_label">Лекарство</string>
     <string name="event_label">Событие</string>
     <string name="menu_tooltip">Меню</string>
@@ -308,7 +308,7 @@
     <string name="tap_to_set">Нажмите для установки</string>
     <string name="settings_community_title">Сообщество</string>
     <string name="settings_community_desc">Вопросы, предложения, новости релизов</string>
-    <string name="fork_acknowledgment">Rx (ранее Med RX) — это поддерживаемый сообществом форк приложения Med от FeDeveloper95 (Apache 2.0), развиваемый nukirk с дополнительными функциями: пропуск доз с указанием причины, журнал остатков, планирование пропусков заранее и отчёты для врача. Это приложение не связано с исходным автором и не поддерживается им.</string>
+    <string name="fork_acknowledgment">Med Rx — это поддерживаемый сообществом форк приложения Med от FeDeveloper95 (Apache 2.0), развиваемый nukirk с дополнительными функциями: пропуск доз с указанием причины, журнал остатков, планирование пропусков заранее и отчёты для врача. Это приложение не связано с исходным автором и не поддерживается им.</string>
     <string name="update_available_version">Доступно обновление до %1$s!</string>
     <string name="settings_export_csv_title">Экспорт в CSV</string>
     <string name="settings_export_csv_desc">Формат электронных таблиц, совместим с любыми приложениями</string>
@@ -376,8 +376,8 @@
     <string name="ledger_kind_initial">Отслеживание начато</string>
     <string name="card_refill_desc">Добавить пополнение к запасам</string>
     <string name="tap_again_to_refill">Добавить %1$d к запасам? Нажмите ещё раз для подтверждения</string>
-    <string name="whatsnew_title">Что нового в Rx</string>
-    <string name="whatsnew_body">Rx (Record eXchange) — новое имя Med RX, поддерживаемого сообществом форка Med от FeDeveloper95. Теперь это личный журнал того, что и когда попадает в организм. Что нового в этой версии:\n\n• Переименование: Med RX теперь называется Rx (Record eXchange)\n• Запись симптомов с указанием степени (лёгкий / умеренный / тяжёлый) и редактируемыми датой и временем\n• Кнопки пропуска и пополнения запасов перенесены рядом с кружком приёма на карточках\n• Запись симптомов переведена на немецкий, французский, испанский и португальский\n\nВаши данные, напоминания и история сохраняются без изменений.</string>
+    <string name="whatsnew_title">Что нового в Med Rx</string>
+    <string name="whatsnew_body">Что нового в этой версии:\n\n• Запись симптомов с указанием степени (лёгкий / умеренный / тяжёлый) и редактируемыми датой и временем\n• Кнопки пропуска и пополнения запасов перенесены рядом с кружком приёма на карточках\n• Запись симптомов переведена на немецкий, французский, испанский и португальский\n\nВаши данные, напоминания и история сохраняются без изменений.</string>
     <string name="whatsnew_community_hint">Есть вопросы или идеи? Кнопка «Сообщество» открывает GitHub Discussions.</string>
     <string name="whatsnew_releases">Релизы</string>
     <string name="whatsnew_community">Сообщество</string>

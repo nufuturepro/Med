@@ -67,7 +67,7 @@ strictly greater than the previous one).
    ```
 
 4. Watch the Actions tab; when green, the Release appears with
-   `Rx-…-phone.apk` and `Rx-…-wear.apk`.
+   `MedRx-…-phone.apk` and `MedRx-…-wear.apk`.
 5. Sanity-check: the updater compares `versionName` strings, so a new
    release must have a strictly greater version than the previous one.
 
@@ -98,7 +98,7 @@ SHA-256: 6A:CE:BC:23:0B:15:C4:E6:16:11:A5:AC:57:37:EE:A5:09:90:88:F6:8C:13:72:FA
 ```
 
 Publish this in the README so users can verify downloaded APKs
-(`keytool -printcert -jarfile Rx-2.2.0-fork.1-phone.apk`).
+(`keytool -printcert -jarfile MedRx-2.2.0-fork.1-phone.apk`).
 
 ## Migrating users from the original Med
 

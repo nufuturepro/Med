@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rx</string>
+    <string name="app_name">Med Rx</string>
     <string name="medicine_label">Medicamento</string>
     <string name="event_label">Evento</string>
     <string name="menu_tooltip">Menú</string>
@@ -308,7 +308,7 @@
     <string name="tap_to_set">Toca para configurar</string>
     <string name="settings_community_title">Comunidad</string>
     <string name="settings_community_desc">Preguntas, sugerencias y novedades</string>
-    <string name="fork_acknowledgment">Rx (anteriormente Med RX) es un fork comunitario de Med de FeDeveloper95 (Apache 2.0), mantenido por nukirk con funciones adicionales: omitir dosis con motivo, registro de existencias, ausencias programadas con antelación e informes para tu médico. Esta aplicación no está afiliada al autor original ni cuenta con su respaldo.</string>
+    <string name="fork_acknowledgment">Med Rx es un fork comunitario de Med de FeDeveloper95 (Apache 2.0), mantenido por nukirk con funciones adicionales: omitir dosis con motivo, registro de existencias, ausencias programadas con antelación e informes para tu médico. Esta aplicación no está afiliada al autor original ni cuenta con su respaldo.</string>
     <string name="update_available_version">¡Actualización a %1$s disponible!</string>
     <string name="settings_export_csv_title">Exportar a CSV</string>
     <string name="settings_export_csv_desc">Formato de hoja de cálculo, compatible con cualquier app</string>
@@ -376,8 +376,8 @@
     <string name="ledger_kind_initial">Seguimiento iniciado</string>
     <string name="card_refill_desc">Añadir una recarga a las existencias</string>
     <string name="tap_again_to_refill">¿Añadir %1$d a las existencias? Toca de nuevo para confirmar</string>
-    <string name="whatsnew_title">Novedades de Rx</string>
-    <string name="whatsnew_body">Rx (Record eXchange) es el nuevo nombre de Med RX, el fork comunitario de Med de FeDeveloper95 — ahora un registro personal de lo que entra en tu cuerpo y cuándo. Novedades de esta versión:\n\n• Cambio de nombre: Med RX ahora es Rx (Record eXchange)\n• Registra síntomas con severidad (leve / moderado / severo) y fecha y hora editables\n• Omitir y reabastecer se ubican junto al círculo de toma en las tarjetas\n• Registro de síntomas traducido al alemán, francés, portugués y ruso\n\nTus datos, recordatorios e historial se conservan sin cambios.</string>
+    <string name="whatsnew_title">Novedades de Med Rx</string>
+    <string name="whatsnew_body">Novedades de esta versión:\n\n• Registra síntomas con severidad (leve / moderado / severo) y fecha y hora editables\n• Omitir y reabastecer se ubican junto al círculo de toma en las tarjetas\n• Registro de síntomas traducido al alemán, francés, portugués y ruso\n\nTus datos, recordatorios e historial se conservan sin cambios.</string>
     <string name="whatsnew_community_hint">¿Preguntas o ideas? El botón «Comunidad» abre GitHub Discussions.</string>
     <string name="whatsnew_releases">Versiones</string>
     <string name="whatsnew_community">Comunidad</string>

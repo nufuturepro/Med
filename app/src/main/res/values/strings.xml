@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rx</string>
+    <string name="app_name">Med Rx</string>
     <string name="medicine_label">Medicine</string>
     <string name="event_label">Event</string>
     <string name="menu_tooltip">Menu</string>
@@ -50,7 +50,7 @@
     <string name="settings_community_title">Community</string>
     <string name="settings_community_desc">Ask, suggest, follow releases</string>
 
-    <string name="fork_acknowledgment">Rx (formerly Med RX) is a community fork of Med by FeDeveloper95 (Apache 2.0), maintained by nukirk with extra features: dose skipping with reasons, supply ledger, pre-skips, and doctor reports. This app is not affiliated with or endorsed by the original author.</string>
+    <string name="fork_acknowledgment">Med Rx is a community fork of Med by FeDeveloper95 (Apache 2.0), maintained by nukirk with extra features: dose skipping with reasons, supply ledger, pre-skips, and doctor reports. This app is not affiliated with or endorsed by the original author.</string>
 
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_desc">Find the latest version</string>
@@ -379,8 +379,8 @@
     <string name="ledger_kind_initial">Tracking started</string>
     <string name="card_refill_desc">Add a refill to supply</string>
     <string name="tap_again_to_refill">Add %1$d to supply? Tap again to confirm</string>
-    <string name="whatsnew_title">What\'s new in Rx</string>
-    <string name="whatsnew_body">Rx (Record eXchange) is the new name for Med RX, the community fork of Med by FeDeveloper95 — now a personal logbook of what goes into your body and when. New in this build:\n\n• Renamed: Med RX is now Rx (Record eXchange)\n• Log symptoms with severity (mild / moderate / severe) and an editable date and time\n• Skip and refill now sit beside the taken circle on med cards\n• Symptom logging translated into German, French, Spanish, Portuguese, and Russian\n\nYour data, reminders, and history carry over unchanged.</string>
+    <string name="whatsnew_title">What\'s new in Med Rx</string>
+    <string name="whatsnew_body">New in this build:\n\n• Log symptoms with severity (mild / moderate / severe) and an editable date and time\n• Skip and refill now sit beside the taken circle on med cards\n• Symptom logging translated into German, French, Spanish, Portuguese, and Russian\n\nYour data, reminders, and history carry over unchanged.</string>
     <string name="whatsnew_community_hint">Questions or ideas? The Community button opens GitHub Discussions.</string>
     <string name="whatsnew_releases">Releases</string>
     <string name="whatsnew_community">Community</string>

@@ -49,20 +49,19 @@ jobs:
       - name: Rename APKs with version
         run: |
           V="${{ steps.version.outputs.name }}"
-          mv app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/Rx-$V-phone.apk"
-          mv wear/build/outputs/apk/release/wear-release.apk "wear/build/outputs/apk/release/Rx-$V-wear.apk"
+          mv app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/MedRx-$V-phone.apk"
+          mv wear/build/outputs/apk/release/wear-release.apk "wear/build/outputs/apk/release/MedRx-$V-wear.apk"
 
       - name: Create GitHub Release with signed APKs
         uses: softprops/action-gh-release@v2
         with:
-          name: Rx ${{ steps.version.outputs.name }}
+          name: Med Rx ${{ steps.version.outputs.name }}
           body: |
-            Rx (formerly Med RX) ${{ steps.version.outputs.name }} (versionCode ${{ steps.version.outputs.code }})
+            Med Rx ${{ steps.version.outputs.name }} (versionCode ${{ steps.version.outputs.code }})
 
-            **Rx (Record eXchange) is a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med) (Apache 2.0), maintained by nukirk.**
+            **Med Rx is a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med) (Apache 2.0), maintained by nukirk.**
 
             ## What's new
-            - Renamed: Med RX is now **Rx (Record eXchange)** — a personal logbook of what goes into your body and when
             - Log symptoms with severity (mild / moderate / severe) and an editable date and time
             - Skip and refill actions moved beside the taken circle on med cards
             - Symptom logging translated into German, French, Spanish, Portuguese, and Russian
@@ -76,8 +75,8 @@ jobs:
             - Crash fix for dose reduction on Android 14 and below (upstream #19)
 
             ## Install
-            - Download **Rx-…-phone.apk** for your phone
-            - Download **Rx-…-wear.apk** for Wear OS (install on the watch)
+            - Download **MedRx-…-phone.apk** for your phone
+            - Download **MedRx-…-wear.apk** for Wear OS (install on the watch)
             - Minimum Android 8.0 (API 26); watch requires Wear OS 3+
             - Updating from Med RX 2.1.0-fork.1? Install straight over it — same app, new name, all data stays.
             - Coming from the original Med app? Install alongside — your data migrates via in-app backup/restore or CSV export/import.
@@ -106,13 +105,13 @@ jobs:
             --jq '.data.repository.discussionCategories.nodes | (map(select(.name == "Announcements")) // []) + . | first | .id')
 
           BODY=$(cat <<EOF
-          ## Rx $VERSION is out
+          ## Med Rx $VERSION is out
 
           [Download it from the release page]($RELEASE_URL).
 
-          **Rx (Record eXchange) is a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med) (Apache 2.0).** This release also renames the app: Med RX is now Rx.
+          **Med Rx is a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med) (Apache 2.0).**
 
-          New in this build: symptom logging with severity and editable date/time, the skip/refill actions moved beside the taken circle on med cards, and full translations for the symptom feature. The full fork feature set (dose skipping with clinical reasons, pre-skip planning, the supply ledger, the skipped-dose doctor report, the Android 14 dose-reduction crash fix) is unchanged. Details are in the release notes.
+          New in this build: symptom logging with severity and editable date/time, and the skip/refill actions moved beside the taken circle on med cards. The full fork feature set (dose skipping with clinical reasons, pre-skip planning, the supply ledger, the skipped-dose doctor report, the Android 14 dose-reduction crash fix) is unchanged. Details are in the release notes.
 
           Questions or problems? Open an issue, or ask here in Discussions — every release gets a thread like this one.
           EOF
@@ -122,7 +121,7 @@ jobs:
             -f query='mutation($r:ID!,$c:ID!,$t:String!,$b:String!){createDiscussion(input:{repositoryId:$r,categoryId:$c,title:$t,body:$b}){discussion{url}}}' \
             -f r="$(gh api "repos/$GITHUB_REPOSITORY" --jq .node_id)" \
             -f c="$CATEGORY_ID" \
-            -f t="Rx $VERSION released" \
+            -f t="Med Rx $VERSION released" \
             -f b="$BODY" \
             --jq '.data.createDiscussion.discussion.url' \
             && echo "Announcement posted."

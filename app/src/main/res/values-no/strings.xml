@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rx</string>
+    <string name="app_name">Med Rx</string>
     <string name="medicine_label">Medisin</string>
     <string name="event_label">Hendelse</string>
     <string name="menu_tooltip">Meny</string>
