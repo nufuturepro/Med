@@ -14,16 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # No SDK setup step: ubuntu-latest ships the Android SDK preinstalled
+      # (licenses pre-accepted) and AGP fetches any missing components.
+      # android-actions/setup-android@v3 is broken anyway - it installs the
+      # removed 'tools' package and fails.
 
       - name: Decode signing keystore
         run: echo "${{ secrets.KEY_STORE_FILE }}" | base64 --decode > "$RUNNER_TEMP/medrx-release.jks"
