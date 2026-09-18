@@ -381,4 +381,16 @@
     <string name="whatsnew_community_hint">Есть вопросы или идеи? Кнопка «Сообщество» открывает GitHub Discussions.</string>
     <string name="whatsnew_releases">Релизы</string>
     <string name="whatsnew_community">Сообщество</string>
+
+    <!-- Запись симптомов -->
+    <string name="symptom_label">Записать симптом</string>
+    <string name="symptom_title_hint">Что вы почувствовали? (например, тошнота)</string>
+    <string name="symptom_notes_hint">Подробности (необязательно)</string>
+    <string name="symptom_date_label">Дата</string>
+    <string name="symptom_time_label">Время</string>
+    <string name="log_symptom_action">Записать</string>
+    <string name="severity_mild">Лёгкий</string>
+    <string name="severity_moderate">Умеренный</string>
+    <string name="severity_severe">Тяжёлый</string>
+
 </resources>

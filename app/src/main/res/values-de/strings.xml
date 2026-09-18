@@ -381,4 +381,16 @@
     <string name="whatsnew_community_hint">Fragen oder Ideen? Die Schaltfläche „Community“ öffnet GitHub Discussions.</string>
     <string name="whatsnew_releases">Releases</string>
     <string name="whatsnew_community">Community</string>
+
+    <!-- Symptom logging -->
+    <string name="symptom_label">Symptom erfassen</string>
+    <string name="symptom_title_hint">Was hast du gespürt? (z. B. Übelkeit)</string>
+    <string name="symptom_notes_hint">Details (Optional)</string>
+    <string name="symptom_date_label">Datum</string>
+    <string name="symptom_time_label">Uhrzeit</string>
+    <string name="log_symptom_action">Symptom erfassen</string>
+    <string name="severity_mild">Leicht</string>
+    <string name="severity_moderate">Mittel</string>
+    <string name="severity_severe">Schwer</string>
+
 </resources>

@@ -381,4 +381,16 @@
     <string name="whatsnew_community_hint">Des questions ou des idées ? Le bouton « Communauté » ouvre GitHub Discussions.</string>
     <string name="whatsnew_releases">Versions</string>
     <string name="whatsnew_community">Communauté</string>
+
+    <!-- Symptom logging -->
+    <string name="symptom_label">Consigner un symptôme</string>
+    <string name="symptom_title_hint">Qu’avez-vous ressenti ? (ex. nausées)</string>
+    <string name="symptom_notes_hint">Détails (Optionnel)</string>
+    <string name="symptom_date_label">Date</string>
+    <string name="symptom_time_label">Heure</string>
+    <string name="log_symptom_action">Consigner</string>
+    <string name="severity_mild">Léger</string>
+    <string name="severity_moderate">Modéré</string>
+    <string name="severity_severe">Sévère</string>
+
 </resources>
