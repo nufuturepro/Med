@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Med</string>
+    <string name="app_name">Rx</string>
     <string name="medicine_label">Medicamento</string>
     <string name="event_label">Evento</string>
     <string name="menu_tooltip">Menu</string>
@@ -308,7 +308,7 @@
     <string name="tap_to_set">Toque para configurar</string>
     <string name="settings_community_title">Comunidade</string>
     <string name="settings_community_desc">Perguntas, sugestões e novidades</string>
-    <string name="fork_acknowledgment">O Med RX é um fork comunitário do Med, de FeDeveloper95 (Apache 2.0), mantido por nukirk com funcionalidades adicionais: pular doses com motivo, registro de estoque, faltas planejadas com antecedência e relatórios para o seu médico. Este app não tem afiliação com o autor original nem seu endosso.</string>
+    <string name="fork_acknowledgment">O Rx (anteriormente Med RX) é um fork comunitário do Med, de FeDeveloper95 (Apache 2.0), mantido por nukirk com funcionalidades adicionais: pular doses com motivo, registro de estoque, faltas planejadas com antecedência e relatórios para o seu médico. Este app não tem afiliação com o autor original nem seu endosso.</string>
     <string name="update_available_version">Atualização para %1$s disponível!</string>
     <string name="settings_export_csv_title">Exportar CSV</string>
     <string name="settings_export_csv_desc">Formato de planilha, compatível com qualquer app</string>
@@ -376,8 +376,8 @@
     <string name="ledger_kind_initial">Monitoramento iniciado</string>
     <string name="card_refill_desc">Adicionar uma recarga ao estoque</string>
     <string name="tap_again_to_refill">Adicionar %1$d ao estoque? Toque novamente para confirmar</string>
-    <string name="whatsnew_title">Novidades do Med RX</string>
-    <string name="whatsnew_body">O Med RX é um fork comunitário do Med, de FeDeveloper95. Novidades desta versão:\n\n• Pular doses com motivo (8 opções clínicas + nota)\n• Planejar pulos futuros para viagens, jejuns ou procedimentos\n• Registro de estoque — cada mudança fica rastreável\n• Registro de doses sem contagem dupla\n• Relatório médico: CSV das doses puladas\n• Correção do travamento ao reduzir doses no Android 14</string>
+    <string name="whatsnew_title">Novidades do Rx</string>
+    <string name="whatsnew_body">Rx (Record eXchange) é o novo nome do Med RX, o fork comunitário do Med, de FeDeveloper95 — agora um registro pessoal do que entra no seu corpo e quando. Novidades desta versão:\n\n• Mudança de nome: Med RX agora é Rx (Record eXchange)\n• Registre sintomas com intensidade (leve / moderado / grave) e data e hora editáveis\n• Pular e reabastecer ficam ao lado do círculo de tomada nos cartões\n• Registro de sintomas traduzido para alemão, francês, espanhol e russo\n\nSeus dados, lembretes e histórico permanecem intactos.</string>
     <string name="whatsnew_community_hint">Dúvidas ou ideias? O botão «Comunidade» abre o GitHub Discussions.</string>
     <string name="whatsnew_releases">Versões</string>
     <string name="whatsnew_community">Comunidade</string>

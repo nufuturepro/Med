@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Med RX</string>
+    <string name="app_name">Rx</string>
     <string name="header_medicines">Medicines</string>
     <string name="header_events">Events</string>
     <string name="no_medicines">No medicines</string>

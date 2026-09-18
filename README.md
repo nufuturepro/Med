@@ -1,10 +1,10 @@
-# Med RX
+# Rx
 
 **Never miss your medicine ever again.**
 
-> **Med RX is a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med)** (Apache 2.0), maintained by **nukirk** and not affiliated with or endorsed by the original author. It adds dose skipping with clinical reasons, pre-skips for future dates, a supply ledger with full traceability, idempotent dose logging so stock always matches the bottle, a doctor-friendly skipped-dose report, and the fix for upstream's crash when reducing doses on Android 14 and below ([upstream issue #19](https://github.com/FeDeveloper95/Med/issues/19)).
+> **Rx** (formerly **Med RX**) is a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med) (Apache 2.0), maintained by **nukirk** and not affiliated with or endorsed by the original author. It adds dose skipping with clinical reasons, pre-skips for future dates, a supply ledger with full traceability, idempotent dose logging so stock always matches the bottle, a doctor-friendly skipped-dose report, and the fix for upstream's crash when reducing doses on Android 14 and below ([upstream issue #19](https://github.com/FeDeveloper95/Med/issues/19)).
 >
-> Install it **alongside** the original Med (different app id, `com.nukirk.medrx`). Moving data is a two-step: export a backup/CSV from Med, import in Med RX. Releases and the in-app updater point at this repository; bug reports go to [this repo's issues](https://github.com/nufuturepro/MedRX/issues).
+> Install it **alongside** the original Med (different app id, `com.nukirk.medrx`). Moving data is a two-step: export a backup/CSV from Med, import in Rx. Releases and the in-app updater point at this repository; bug reports go to [this repo's issues](https://github.com/nufuturepro/MedRX/issues).
 
 ## Highlights vs upstream
 
@@ -15,11 +15,11 @@
 - **Doctor report** — CSV of every skipped dose with date, medication, reason, note
 - **Stats** — skipped days are visually distinct from missed ones, per-reason breakdown
 
-### For the original Med app
+### Acknowledgements
 
-All credit for the original concept, design language, and core code belongs to [FeDeveloper95](https://github.com/FeDeveloper95). Please consider supporting the original project. Upstream's disclaimer stands: this fork is supported here, in this repository.
+Rx began as **Med RX**, a community fork of [Med by FeDeveloper95](https://github.com/FeDeveloper95/Med) (Apache 2.0). All credit for the original concept, design language, and core code belongs to FeDeveloper95 — please consider supporting the original project:
 
-<img width="4400" height="2475" alt="Med banner" src="https://github.com/user-attachments/assets/8a9af132-485b-437d-a97b-5f62f6ce197c" />
+**➡ [github.com/FeDeveloper95/Med](https://github.com/FeDeveloper95/Med)**
 
 ![Kotlin](https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white) ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white) ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=android&logoColor=white) ![Material 3](https://img.shields.io/badge/Material%203-Expressive-purple?style=for-the-badge)
 

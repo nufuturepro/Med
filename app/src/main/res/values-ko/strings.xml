@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Med</string>
+    <string name="app_name">Rx</string>
     <string name="medicine_label">약</string>
     <string name="event_label">이벤트</string>
     <string name="menu_tooltip">메뉴</string>
