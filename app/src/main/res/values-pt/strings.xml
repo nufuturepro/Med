@@ -306,7 +306,6 @@
     <string name="profile_picture">Foto de perfil</string>
     <string name="image_set">Imagem configurada</string>
     <string name="tap_to_set">Toque para configurar</string>
-<resources>
     <string name="settings_community_title">Comunidade</string>
     <string name="settings_community_desc">Perguntas, sugestões e novidades</string>
     <string name="fork_acknowledgment">O Med RX é um fork comunitário do Med, de FeDeveloper95 (Apache 2.0), mantido por nukirk com funcionalidades adicionais: pular doses com motivo, registro de estoque, faltas planejadas com antecedência e relatórios para o seu médico. Este app não tem afiliação com o autor original nem seu endosso.</string>
@@ -382,5 +381,4 @@
     <string name="whatsnew_community_hint">Dúvidas ou ideias? O botão «Comunidade» abre o GitHub Discussions.</string>
     <string name="whatsnew_releases">Versões</string>
     <string name="whatsnew_community">Comunidade</string>
-</resources>
 </resources>

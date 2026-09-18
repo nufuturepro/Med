@@ -306,10 +306,9 @@
     <string name="profile_picture">Photo de profil</string>
     <string name="image_set">Image définie</string>
     <string name="tap_to_set">Appuyer pour définir</string>
-<resources>
     <string name="settings_community_title">Communauté</string>
     <string name="settings_community_desc">Questions, suggestions, suivi des versions</string>
-    <string name="fork_acknowledgment">Med RX est un fork communautaire de Med par FeDeveloper95 (Apache 2.0), maintenu par nukirk avec des fonctionnalités supplémentaires : sauts de doses avec motifs, journal des stocks, absences planifiées à l\u2019avance et rapports pour votre médecin. Cette application n\u2019est pas affiliée au ni soutenue par l\u2019auteur original.</string>
+    <string name="fork_acknowledgment">Med RX est un fork communautaire de Med par FeDeveloper95 (Apache 2.0), maintenu par nukirk avec des fonctionnalités supplémentaires : sauts de doses avec motifs, journal des stocks, absences planifiées à l’avance et rapports pour votre médecin. Cette application n’est pas affiliée au ni soutenue par l’auteur original.</string>
     <string name="update_available_version">Mise à jour vers %1$s disponible !</string>
     <string name="settings_export_csv_title">Exporter en CSV</string>
     <string name="settings_export_csv_desc">Format tableur, compatible avec toutes les applications</string>
@@ -324,10 +323,10 @@
     <string name="archived_meds_desc">Ces médicaments ne sont plus planifiés. Restaurez-en un pour reprendre le suivi.</string>
     <string name="archived_med_badge">Archivé</string>
     <string name="restore_med">Restaurer</string>
-    <string name="archived_empty">Rien d\u2019archivé pour le moment.</string>
+    <string name="archived_empty">Rien d’archivé pour le moment.</string>
     <string name="med_restored">%1$s restauré</string>
     <string name="inventory_channel_name">Alertes de stock</string>
-    <string name="inventory_channel_desc">Alertes quand le stock d\u2019un médicament devient faible</string>
+    <string name="inventory_channel_desc">Alertes quand le stock d’un médicament devient faible</string>
     <string name="supply_track_label">Suivre le stock</string>
     <string name="supply_doses_left">Doses restantes</string>
     <string name="supply_refill_size">Quantité par recharge (doses)</string>
@@ -362,8 +361,8 @@
     <string name="legend_partial">Partiel</string>
     <string name="legend_skipped">Sauté</string>
     <string name="legend_missed">Manqué</string>
-    <string name="preskip_title">Sauter une dose à l\u2019avance</string>
-    <string name="preskip_desc">Vous ne prendrez pas ce médicament un jour à venir (voyage, jeûne, intervention) ? Marquez-le maintenant pour qu\u2019il ne compte pas comme manqué.</string>
+    <string name="preskip_title">Sauter une dose à l’avance</string>
+    <string name="preskip_desc">Vous ne prendrez pas ce médicament un jour à venir (voyage, jeûne, intervention) ? Marquez-le maintenant pour qu’il ne compte pas comme manqué.</string>
     <string name="preskip_pick_date">Choisissez une date à sauter</string>
     <string name="preskip_pick_date_done">Saut le %1$s</string>
     <string name="alarm_skip_next">Suivant</string>
@@ -382,5 +381,4 @@
     <string name="whatsnew_community_hint">Des questions ou des idées ? Le bouton « Communauté » ouvre GitHub Discussions.</string>
     <string name="whatsnew_releases">Versions</string>
     <string name="whatsnew_community">Communauté</string>
-</resources>
 </resources>

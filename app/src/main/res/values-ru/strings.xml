@@ -306,7 +306,6 @@
     <string name="profile_picture">Фото профиля</string>
     <string name="image_set">Изображение установлено</string>
     <string name="tap_to_set">Нажмите для установки</string>
-<resources>
     <string name="settings_community_title">Сообщество</string>
     <string name="settings_community_desc">Вопросы, предложения, новости релизов</string>
     <string name="fork_acknowledgment">Med RX — это поддерживаемый сообществом форк приложения Med от FeDeveloper95 (Apache 2.0), развиваемый nukirk с дополнительными функциями: пропуск доз с указанием причины, журнал остатков, планирование пропусков заранее и отчёты для врача. Это приложение не связано с исходным автором и не поддерживается им.</string>
@@ -382,5 +381,4 @@
     <string name="whatsnew_community_hint">Есть вопросы или идеи? Кнопка «Сообщество» открывает GitHub Discussions.</string>
     <string name="whatsnew_releases">Релизы</string>
     <string name="whatsnew_community">Сообщество</string>
-</resources>
 </resources>
