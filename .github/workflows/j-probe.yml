@@ -1,0 +1,19 @@
+name: ReleaseJ
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    steps:
+      - name: Env with secret names, empty values
+        env:
+          KEY_STORE_FILE: ""
+          KEY_STORE_PASSWORD: ""
+          ALIAS: ""
+          KEY_PASSWORD: ""
+        run: echo "probe J"
