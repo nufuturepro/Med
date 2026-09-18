@@ -45,7 +45,8 @@ object MedUpdatePlanner {
         val freqLabel: String = "",
         val rangeStart: Long? = NOT_A_RANGE,
         val rangeEnd: Long? = NOT_A_RANGE,
-        val selectedDate: LocalDate = LocalDate.now()
+        val selectedDate: LocalDate = LocalDate.now(),
+        val symptomSeverity: SymptomSeverity? = null
     )
 
     sealed class Plan {
@@ -140,6 +141,7 @@ object MedUpdatePlanner {
             intervalGap = request.intervalGap,
             notificationType = request.notificationType,
             frequencyLabel = request.freqLabel,
+            symptomSeverity = request.symptomSeverity,
             endDate = endDate,
             supplyDosesLeft = supply?.dosesLeft,
             supplyDosesPerRefill = supply?.dosesPerRefill?.takeIf { it > 0 },

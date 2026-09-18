@@ -15,7 +15,7 @@ import java.time.LocalTime
  *   creation_time,taken_dates,taken_times,recurrence_days,end_date,interval_days,
  *   notes,display_order,category,notification_type
  *
- * - type: Medicine | Event | Illness
+ * - type: Medicine | Event | Illness | Symptom
  * - dates/times are ISO (2026-08-15, 12:00)
  * - taken_dates and taken_times are parallel |-separated lists, e.g.
  *   "2026-08-15|2026-08-16" and "12:10|12:31". A missing time falls back to 00:00.
@@ -33,7 +33,8 @@ object CsvPortability {
         "taken_dates", "taken_times", "recurrence_days", "end_date",
         "interval_days", "notes", "display_order", "category", "notification_type",
         "supply_doses_left", "supply_refill_size", "supply_low_threshold",
-        "skipped_dates", "skipped_reasons", "skipped_times", "skipped_notes"
+        "skipped_dates", "skipped_reasons", "skipped_times", "skipped_notes",
+        "symptom_severity"
     )
 
     private const val LIST_SEPARATOR = "|"
@@ -75,7 +76,8 @@ object CsvPortability {
                 skips.joinToString(LIST_SEPARATOR) {
                     (m.skipHistory[it]?.time ?: LocalTime.MIDNIGHT).toString()
                 },
-                skips.joinToString(LIST_SEPARATOR) { m.skipHistory[it]?.note ?: "" }
+                skips.joinToString(LIST_SEPARATOR) { m.skipHistory[it]?.note ?: "" },
+                m.symptomSeverity?.name ?: ""
             )
             sb.append(cells.joinToString(",") { encodeCell(it) }).append("\r\n")
         }
@@ -165,7 +167,14 @@ object CsvPortability {
                         supplyDosesLeft = cell("supply_doses_left").toIntOrNull(),
                         supplyDosesPerRefill = cell("supply_refill_size").toIntOrNull(),
                         supplyLowThreshold = cell("supply_low_threshold").toIntOrNull(),
-                        skipHistory = skips
+                        skipHistory = skips,
+                        symptomSeverity = cell("symptom_severity").takeIf { it.isNotEmpty() }?.let {
+                            try {
+                                SymptomSeverity.valueOf(it)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
                     )
                 )
             } catch (e: IllegalArgumentException) {

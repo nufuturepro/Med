@@ -384,4 +384,15 @@
     <string name="whatsnew_community_hint">Questions or ideas? The Community button opens GitHub Discussions.</string>
     <string name="whatsnew_releases">Releases</string>
     <string name="whatsnew_community">Community</string>
+
+    <!-- Symptom logging -->
+    <string name="symptom_label">Log symptom</string>
+    <string name="symptom_title_hint">What did you feel? (e.g. nausea)</string>
+    <string name="symptom_notes_hint">Details (optional)</string>
+    <string name="symptom_date_label">Date</string>
+    <string name="symptom_time_label">Time</string>
+    <string name="log_symptom_action">Log symptom</string>
+    <string name="severity_mild">Mild</string>
+    <string name="severity_moderate">Moderate</string>
+    <string name="severity_severe">Severe</string>
 </resources>

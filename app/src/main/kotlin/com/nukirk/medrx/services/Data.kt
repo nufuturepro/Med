@@ -63,6 +63,13 @@ enum class SkipReason {
     OTHER                   // Patient discretion
 }
 
+/** How intense a logged symptom episode is. */
+enum class SymptomSeverity {
+    MILD,
+    MODERATE,
+    SEVERE
+}
+
 /** A dose skipped on a given date: reason plus an optional note. */
 data class SkipRecord(
     val reason: SkipReason,
@@ -126,7 +133,8 @@ data class MedData(
     val supplyDosesPerRefill: Int? = null,
     val supplyLowThreshold: Int? = null,
     val supplyAlertShown: Boolean = false,
-    val supplyLedger: List<SupplyChange> = emptyList()
+    val supplyLedger: List<SupplyChange> = emptyList(),
+    val symptomSeverity: SymptomSeverity? = null
 ) : Serializable {
 
     fun toJson(): JSONObject {
@@ -183,6 +191,7 @@ data class MedData(
             ledgerArray.put(obj)
         }
         json.put("supplyLedger", ledgerArray)
+        json.put("symptomSeverity", symptomSeverity?.name ?: JSONObject.NULL)
         return json
     }
 
@@ -246,6 +255,11 @@ data class MedData(
                 supplyDosesPerRefill = if (json.isNull("supplyDosesPerRefill")) null else json.optInt("supplyDosesPerRefill"),
                 supplyLowThreshold = if (json.isNull("supplyLowThreshold")) null else json.optInt("supplyLowThreshold"),
                 supplyAlertShown = json.optBoolean("supplyAlertShown", false),
+                symptomSeverity = if (json.isNull("symptomSeverity")) null else try {
+                    SymptomSeverity.valueOf(json.getString("symptomSeverity"))
+                } catch (e: Exception) {
+                    null
+                },
                 supplyLedger = buildList {
                     json.optJSONArray("supplyLedger")?.let { arr ->
                         for (i in 0 until arr.length()) {
@@ -434,6 +448,7 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         val initial = _items.filter { item ->
             when (item.type) {
                 ItemType.Event -> item.creationDate == date
+                ItemType.Symptom -> item.creationDate == date
                 ItemType.Illness -> false
                 ItemType.Medicine -> {
                     val isAfterStart = !date.isBefore(item.creationDate)
@@ -666,7 +681,8 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         category: String? = null,
         intervalGap: Int? = null,
         notificationType: Int = 0,
-        supply: InventoryEntry? = null
+        supply: InventoryEntry? = null,
+        symptomSeverity: SymptomSeverity? = null
     ) {
         val groupId = System.currentTimeMillis()
         val baseDate = selectedDate
@@ -677,6 +693,7 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         val itemsOnDate = _items.filter { item ->
             when (item.type) {
                 ItemType.Event -> item.creationDate == selectedDate
+                ItemType.Symptom -> item.creationDate == selectedDate
                 ItemType.Illness -> {
                     val isAfterStart = !selectedDate.isBefore(item.creationDate)
                     val isBeforeEnd = item.endDate == null || !selectedDate.isAfter(item.endDate)
@@ -746,6 +763,7 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
                 creationDate = baseDate,
                 creationTime = time,
                 recurrenceDays = days,
+                symptomSeverity = symptomSeverity,
                 endDate = null,
                 notes = notes,
                 displayOrder = currentOrder++,
@@ -774,7 +792,8 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         notificationType: Int = 0,
         rangeStart: Long? = -2L,
         rangeEnd: Long? = -2L,
-        supply: InventoryEntry? = null
+        supply: InventoryEntry? = null,
+        symptomSeverity: SymptomSeverity? = null
     ) {
         val context = getApplication<Application>()
         val freqLabel = if (intervalGap == 14) context.getString(R.string.frequency_unit_biweek)
@@ -801,7 +820,8 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
                 freqLabel = freqLabel,
                 rangeStart = rangeStart,
                 rangeEnd = rangeEnd,
-                selectedDate = selectedDate
+                selectedDate = selectedDate,
+                symptomSeverity = symptomSeverity
             ),
             supply,
             _items.filter { it.type == originalItem.type }
@@ -881,6 +901,7 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         val itemsOnDate = _items.filter {
             when (it.type) {
                 ItemType.Event -> it.creationDate == deleteDate
+                ItemType.Symptom -> it.creationDate == deleteDate
                 ItemType.Illness -> {
                     val isAfterStart = !deleteDate.isBefore(it.creationDate)
                     val isBeforeEnd = it.endDate == null || !deleteDate.isAfter(it.endDate)
@@ -1132,6 +1153,36 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         saveData()
     }
 
+    /**
+     * In-place edit for a logged symptom (single entry, no schedule): updates
+     * fields, the editable date/time, and severity while preserving the id —
+     * no planner/rebuild needed because symptoms have no slots or history.
+     */
+    fun updateSymptom(
+        originalItem: MedData,
+        title: String,
+        iconName: String?,
+        colorCode: String?,
+        date: LocalDate,
+        time: LocalTime,
+        severity: SymptomSeverity?,
+        notes: String?
+    ) {
+        if (originalItem.type != ItemType.Symptom) return
+        val index = _items.indexOfFirst { it.id == originalItem.id }
+        if (index == -1) return
+        _items[index] = originalItem.copy(
+            title = title,
+            iconName = iconName,
+            colorCode = colorCode,
+            creationDate = date,
+            creationTime = time,
+            symptomSeverity = severity,
+            notes = notes
+        )
+        saveData()
+    }
+
     fun reloadData() {
         loadData()
         syncToWear()
@@ -1144,6 +1195,7 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         val itemsToday = _items.filter { item ->
             when (item.type) {
                 ItemType.Event -> item.creationDate == today
+                ItemType.Symptom -> item.creationDate == today
                 ItemType.Illness -> {
                     val isAfterStart = !today.isBefore(item.creationDate)
                     val isBeforeEnd = item.endDate == null || !today.isAfter(item.endDate)
@@ -1172,7 +1224,10 @@ class MedViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         val evs =
-            itemsToday.filter { (it.type == ItemType.Event || it.type == ItemType.Illness) && it.title.isNotBlank() && it.iconName != "DIVIDER" }
+            itemsToday.filter {
+                (it.type == ItemType.Event || it.type == ItemType.Illness || it.type == ItemType.Symptom) &&
+                    it.title.isNotBlank() && it.iconName != "DIVIDER"
+            }
                 .map {
                     "${it.creationTime.format(formatter)} - ${it.title}"
                 }

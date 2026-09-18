@@ -62,6 +62,7 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Healing
 import androidx.compose.material.icons.rounded.LocalHospital
 import androidx.compose.material.icons.rounded.MedicalServices
+import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.SelfImprovement
 import androidx.compose.material.icons.rounded.Star
@@ -137,7 +138,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-enum class ItemType { Event, Medicine, Illness }
+enum class ItemType { Event, Medicine, Illness, Symptom }
 
 val AVAILABLE_ICONS: Map<String, ImageVector> = mapOf(
     "MedicalServices" to Icons.Rounded.MedicalServices,
@@ -152,7 +153,8 @@ val AVAILABLE_ICONS: Map<String, ImageVector> = mapOf(
     "Bolt" to Icons.Rounded.Bolt,
     "WaterDrop" to Icons.Rounded.WaterDrop,
     "DirectionsRun" to Icons.Rounded.DirectionsRun,
-    "Healing" to Icons.Rounded.Healing
+    "Healing" to Icons.Rounded.Healing,
+    "Psychology" to Icons.Rounded.Psychology
 )
 
 val AVAILABLE_COLORS = listOf(

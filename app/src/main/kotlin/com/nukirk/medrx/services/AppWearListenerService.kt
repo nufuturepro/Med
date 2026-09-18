@@ -49,7 +49,7 @@ class AppWearListenerService : WearableListenerService() {
                     if (isAfterStart && isBeforeEnd && isCorrectDay && isCorrectGap) {
                         medicinesList.add(displayStr)
                     }
-                } else if (item.type == ItemType.Event) {
+                } else if (item.type == ItemType.Event || item.type == ItemType.Symptom) {
                     if (item.creationDate == today) {
                         eventsList.add(displayStr)
                     }

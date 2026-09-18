@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MedicalServices
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -440,8 +441,10 @@ fun MedDataCard(
             },
             trailingContent = if (isMedicine) {
                 {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(contentAlignment = Alignment.Center) {
+                    // The taken radio stands alone in the trailing slot — the
+                    // Skip/Refill actions live in their own row at the bottom
+                    // of the card so they never crowd or overlap the circle.
+                    Box(contentAlignment = Alignment.Center) {
                         if (alpha.value > 0f) {
                             Icon(
                                 painter = painterResource(id = currentShape),
@@ -490,65 +493,77 @@ fun MedDataCard(
                             },
                             enabled = toggleEnabled
                         )
-                        // Small action row under the radio (only while the
-                        // dose is still open): Skip plus one-tap Refill.
-                        if (!isTakenToday && toggleEnabled) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (!isSkippedToday) {
-                                    TextButton(
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            onSkip()
-                                        },
-                                        enabled = !isSkippedToday,
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                        modifier = Modifier.height(28.dp)
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.card_skip_action),
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
-                                }
-                                if (item.supplyDosesLeft != null && item.supplyDosesPerRefill != null) {
-                                    IconButton(
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            val now = System.currentTimeMillis()
-                                            if (now < pendingRefillUntil) {
-                                                pendingRefillUntil = 0L
-                                                onRefill()
-                                            } else {
-                                                pendingRefillUntil = now + UNTAKE_CONFIRM_WINDOW_MS
-                                                Toast.makeText(
-                                                    context,
-                                                    context.getString(
-                                                        R.string.tap_again_to_refill,
-                                                        item.supplyDosesPerRefill
-                                                    ),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        },
-                                        modifier = Modifier.size(28.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Rounded.Autorenew,
-                                            contentDescription = stringResource(R.string.card_refill_desc),
-                                            modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
                     }
                 }
             } else null,
             modifier = Modifier.padding(vertical = 4.dp),
             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
         )
+        // Secondary actions row: Skip (with taken-state) and one-tap Refill.
+        // Sitting below the list item, it never blocks the taken circle.
+        if (isMedicine && toggleEnabled &&
+            (!isTakenToday || (item.supplyDosesLeft != null && item.supplyDosesPerRefill != null))
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!isTakenToday && !isSkippedToday) {
+                    TextButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSkip()
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        modifier = Modifier.height(30.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.SkipNext,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            stringResource(R.string.card_skip_action),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (item.supplyDosesLeft != null && item.supplyDosesPerRefill != null) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            val now = System.currentTimeMillis()
+                            if (now < pendingRefillUntil) {
+                                pendingRefillUntil = 0L
+                                onRefill()
+                            } else {
+                                pendingRefillUntil = now + UNTAKE_CONFIRM_WINDOW_MS
+                                Toast.makeText(
+                                    context,
+                                    context.getString(
+                                        R.string.tap_again_to_refill,
+                                        item.supplyDosesPerRefill
+                                    ),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Autorenew,
+                            contentDescription = stringResource(R.string.card_refill_desc),
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

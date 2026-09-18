@@ -47,6 +47,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.MedicalServices
+import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.DatePicker
@@ -103,6 +104,7 @@ import com.nukirk.medrx.SettingsActivity
 import com.nukirk.medrx.SkipReasonSheet
 import com.nukirk.medrx.SwipeableSquishItem
 import com.nukirk.medrx.elements.MainActivity.EventBottomSheet
+import com.nukirk.medrx.elements.MainActivity.SymptomBottomSheet
 import com.nukirk.medrx.elements.MainActivity.IllnessesBottomSheet
 import com.nukirk.medrx.elements.MainActivity.MainFAB
 import com.nukirk.medrx.elements.MainActivity.MedDataCard
@@ -137,6 +139,7 @@ fun MedApp(
     var showMedicineDialog by remember { mutableStateOf(false) }
     var showEventDialog by remember { mutableStateOf(false) }
     var showIllnessDialog by remember { mutableStateOf(false) }
+    var showSymptomDialog by remember { mutableStateOf(false) }
     var skipRequest by remember { mutableStateOf<Pair<MedData, LocalDate>?>(null) }
     var editingItem by remember { mutableStateOf<MedData?>(null) }
     var preFilledText by remember { mutableStateOf("") }
@@ -171,6 +174,11 @@ fun MedApp(
                     ItemType.Illness,
                     icMind,
                     Triple(context.getString(R.string.illness_label), null, null)
+                ),
+                Triple(
+                    ItemType.Symptom,
+                    Icons.Rounded.Psychology,
+                    Triple(context.getString(R.string.symptom_label), null, null)
                 )
             )
         val presetItems: List<Triple<ItemType, ImageVector, Triple<String, String?, String?>>> =
@@ -274,6 +282,7 @@ fun MedApp(
                                         preFilledText = ""
                                         if (type == ItemType.Medicine) showMedicineDialog = true
                                         else if (type == ItemType.Illness) showIllnessDialog = true
+                                        else if (type == ItemType.Symptom) showSymptomDialog = true
                                         else showEventDialog = true
                                     } else {
                                         viewModel.addItem(
@@ -486,6 +495,7 @@ fun MedApp(
                                             val pageItems = viewModel.items.filter { item ->
                                                 when (item.type) {
                                                     ItemType.Event -> item.creationDate == pageDate
+                                                    ItemType.Symptom -> item.creationDate == pageDate
                                                     ItemType.Illness -> {
                                                         val isAfterStart =
                                                             !pageDate.isBefore(item.creationDate)
@@ -1249,6 +1259,7 @@ fun MedApp(
         val itemToEdit = editingItem!!
         val isMed = itemToEdit.type == ItemType.Medicine
         val isIllness = itemToEdit.type == ItemType.Illness
+        val isSymptom = itemToEdit.type == ItemType.Symptom
         if (useBottomSheet) {
             if (isMed) {
                 MedicineBottomSheet(
@@ -1297,6 +1308,24 @@ fun MedApp(
                             null
                         )
                         viewModel.selectedDate = prevSelected
+                        editingItem = null
+                    },
+                    initialItem = itemToEdit
+                )
+            } else if (isSymptom) {
+                SymptomBottomSheet(
+                    onDismiss = { editingItem = null },
+                    onConfirm = { title, iconName, colorCode, date, time, severity, notes ->
+                        viewModel.updateSymptom(
+                            itemToEdit,
+                            title,
+                            iconName,
+                            colorCode,
+                            date,
+                            time,
+                            severity,
+                            notes
+                        )
                         editingItem = null
                     },
                     initialItem = itemToEdit
@@ -1388,6 +1417,31 @@ fun MedApp(
                         intervalGap = intervalGap
                     )
                     showEventDialog = false
+                },
+                initialText = preFilledText
+            )
+        }
+    }
+
+    if (showSymptomDialog) {
+        if (useBottomSheet) {
+            SymptomBottomSheet(
+                onDismiss = { showSymptomDialog = false },
+                onConfirm = { title, iconName, colorCode, date, time, severity, notes ->
+                    val prevSelected = viewModel.selectedDate
+                    viewModel.selectedDate = date
+                    viewModel.addItem(
+                        ItemType.Symptom,
+                        title,
+                        iconName,
+                        colorCode,
+                        listOf(time),
+                        null,
+                        notes = notes,
+                        symptomSeverity = severity
+                    )
+                    viewModel.selectedDate = prevSelected
+                    showSymptomDialog = false
                 },
                 initialText = preFilledText
             )
