@@ -46,6 +46,12 @@ jobs:
           echo "name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
 
+      - name: Rename APKs with version
+        run: |
+          V="${{ steps.version.outputs.name }}"
+          mv app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/MedRX-$V-phone.apk"
+          mv wear/build/outputs/apk/release/wear-release.apk "wear/build/outputs/apk/release/MedRX-$V-wear.apk"
+
       - name: Create GitHub Release with signed APKs
         uses: softprops/action-gh-release@v2
         with:
