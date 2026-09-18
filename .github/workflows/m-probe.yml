@@ -1,0 +1,18 @@
+name: ReleaseM
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  discussions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Env with ALIAS only
+        env:
+          ALIAS: ${{ secrets.ALIAS }}
+        run: echo "probe M"
